@@ -1,3 +1,5 @@
+import 'package:ccosvg/display_svg_page.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -102,6 +104,18 @@ class _MyHomePageState extends State<MyHomePage> {
               '$_counter',
               style: Theme.of(context).textTheme.headline4,
             ),
+            ElevatedButton(
+                onPressed: () async {
+                  var result = await FilePicker.platform.pickFiles();
+                  if (result == null) return;
+                  var bytes = result.files.first.bytes;
+                  if (bytes == null) return;
+                  var args = DisplaySvgArguments(bytes);
+                  var settings = RouteSettings(arguments: args);
+                  Navigator.push(context,
+                      MaterialPageRoute<void>(builder: (context) => const DisplaySvgPage(), settings: settings));
+                },
+                child: const Text('Open SVG File'))
           ],
         ),
       ),
