@@ -110,10 +110,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   if (result == null) return;
                   var bytes = result.files.first.bytes;
                   if (bytes == null) return;
-                  var args = DisplaySvgArguments(bytes);
-                  var settings = RouteSettings(arguments: args);
-                  Navigator.push(context,
-                      MaterialPageRoute<void>(builder: (context) => const DisplaySvgPage(), settings: settings));
+                  Navigator.push(context, MaterialPageRoute<void>(builder: (context) => DisplaySvgPage(bytes)));
                 },
                 child: const Text('Open SVG File'))
           ],
