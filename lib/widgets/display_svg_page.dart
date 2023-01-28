@@ -1,31 +1,17 @@
-import 'dart:typed_data';
-
+import 'package:ccosvg/models/svg_document.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class DisplaySvgPage extends StatefulWidget {
-  final Uint8List svgBytes;
-  final List<HSLColor> svgColors = [
-    HSLColor.fromColor(Colors.red),
-    HSLColor.fromColor(Colors.green),
-    HSLColor.fromColor(Colors.blue),
-    HSLColor.fromColor(Colors.red),
-    HSLColor.fromColor(Colors.green),
-    HSLColor.fromColor(Colors.blue),
-    HSLColor.fromColor(Colors.red),
-    HSLColor.fromColor(Colors.green),
-    HSLColor.fromColor(Colors.blue),
-    HSLColor.fromColor(Colors.red),
-    HSLColor.fromColor(Colors.green),
-    HSLColor.fromColor(Colors.blue),
-  ];
-  DisplaySvgPage(this.svgBytes, {Key? key}) : super(key: key);
+  final SvgDocument svgDocument;
+  final List<SvgColor> svgColors;
+  const DisplaySvgPage(this.svgDocument, this.svgColors, {Key? key}) : super(key: key);
   @override
   State<StatefulWidget> createState() => _DisplaySvgPageState();
 }
 
 class _HSLColorDataTableSource extends DataTableSource {
-  List<HSLColor> colors;
+  List<SvgColor> colors;
   _HSLColorDataTableSource(this.colors);
 
   @override
@@ -33,10 +19,10 @@ class _HSLColorDataTableSource extends DataTableSource {
     if (index < 0 || index >= colors.length) return null;
     final color = colors[index];
     return DataRow.byIndex(index: index, cells: [
-      DataCell(Text(color.hue.toStringAsFixed(1))),
-      DataCell(Text((color.saturation * 100).toStringAsFixed(1))),
-      DataCell(Text((color.lightness * 100).toStringAsFixed(1))),
-      DataCell(Text((color.alpha * 100).toStringAsFixed(1))),
+      DataCell(Text(color.hslColor.hue.toStringAsFixed(1))),
+      DataCell(Text((color.hslColor.saturation * 100).toStringAsFixed(1))),
+      DataCell(Text((color.hslColor.lightness * 100).toStringAsFixed(1))),
+      DataCell(Text((color.hslColor.alpha * 100).toStringAsFixed(1))),
     ]);
   }
 
@@ -83,7 +69,7 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
                 height: 1,
               ),
               Expanded(
-                child: SvgPicture.memory(widget.svgBytes),
+                child: SvgPicture.memory(widget.svgDocument.bytes),
               ),
             ])));
   }
@@ -111,7 +97,7 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
                   width: 1,
                 ),
                 Expanded(
-                  child: SvgPicture.memory(widget.svgBytes),
+                  child: SvgPicture.memory(widget.svgDocument.bytes),
                 ),
               ],
             )));

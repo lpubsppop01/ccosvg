@@ -1,3 +1,4 @@
+import 'package:ccosvg/models/svg_document.dart';
 import 'package:ccosvg/widgets/display_svg_page.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -79,9 +80,13 @@ class _MyHomePageState extends State<MyHomePage> {
                 onPressed: () async {
                   var result = await FilePicker.platform.pickFiles();
                   if (result == null) return;
-                  var bytes = result.files.first.bytes;
-                  if (bytes == null) return;
-                  Navigator.push(context, MaterialPageRoute<void>(builder: (context) => DisplaySvgPage(bytes)));
+                  var svgBytes = result.files.first.bytes;
+                  if (svgBytes == null) return;
+                  var svgDocument = SvgDocument(svgBytes);
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute<void>(
+                          builder: (context) => DisplaySvgPage(svgDocument, svgDocument.getColors())));
                 },
                 child: const Text('Open SVG File'))
           ],
