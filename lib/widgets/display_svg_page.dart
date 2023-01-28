@@ -11,19 +11,25 @@ class DisplaySvgPage extends StatefulWidget {
 }
 
 class _HSLColorDataTableSource extends DataTableSource {
-  List<SvgColor> colors;
-  _HSLColorDataTableSource(this.colors);
+  final List<SvgColor> colors;
+  final Set<int> selectedIndices;
+  final Function(bool?, int) onSelectionChanged;
+  _HSLColorDataTableSource(this.colors, this.selectedIndices, this.onSelectionChanged);
 
   @override
   DataRow? getRow(int index) {
     if (index < 0 || index >= colors.length) return null;
     final color = colors[index];
-    return DataRow.byIndex(index: index, cells: [
-      DataCell(Text(color.hslColor.hue.toStringAsFixed(1))),
-      DataCell(Text((color.hslColor.saturation * 100).toStringAsFixed(1))),
-      DataCell(Text((color.hslColor.lightness * 100).toStringAsFixed(1))),
-      DataCell(Text((color.hslColor.alpha * 100).toStringAsFixed(1))),
-    ]);
+    return DataRow.byIndex(
+        index: index,
+        selected: selectedIndices.contains(index),
+        onSelectChanged: (value) => onSelectionChanged(value, index),
+        cells: [
+          DataCell(Text(color.hslColor.hue.toStringAsFixed(1))),
+          DataCell(Text((color.hslColor.saturation * 100).toStringAsFixed(1))),
+          DataCell(Text((color.hslColor.lightness * 100).toStringAsFixed(1))),
+          DataCell(Text((color.hslColor.alpha * 100).toStringAsFixed(1))),
+        ]);
   }
 
   @override
@@ -33,10 +39,13 @@ class _HSLColorDataTableSource extends DataTableSource {
   int get rowCount => colors.length;
 
   @override
-  int get selectedRowCount => 0;
+  int get selectedRowCount => selectedIndices.length;
 }
 
 class _DisplaySvgPageState extends State<DisplaySvgPage> {
+  Set<int> selectedIndices = {};
+  bool hasSelection = false;
+
   @override
   Widget build(BuildContext context) {
     final double deviceWidth = MediaQuery.of(context).size.width;
@@ -47,7 +56,7 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
   }
 
   Widget _buildPortrait(BuildContext context, double deviceWidth, double deviceHeight) {
-    final dataSource = _HSLColorDataTableSource(widget.svgColors);
+    final dataSource = _HSLColorDataTableSource(widget.svgColors, selectedIndices, _onSelectionChanged);
     final dataTableHeightMax = deviceHeight * 0.5 - 56 - 56 - 56 - 8;
     final dataTableRowsPerPage = (dataTableHeightMax / kMinInteractiveDimension).truncate();
     final dataTableHeight = dataTableRowsPerPage * kMinInteractiveDimension + 56 + 56 + 8;
@@ -75,7 +84,7 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
   }
 
   Widget _buildLandscape(BuildContext context, double deviceWidth, double deviceHeight) {
-    final dataSource = _HSLColorDataTableSource(widget.svgColors);
+    final dataSource = _HSLColorDataTableSource(widget.svgColors, selectedIndices, _onSelectionChanged);
     final dataTableHeightMax = deviceHeight - 56 - 56 - 56 - 8;
     final dataTableRowsPerPage = (dataTableHeightMax / kMinInteractiveDimension).truncate();
     return Scaffold(
@@ -103,25 +112,39 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
             )));
   }
 
+  void _onSelectionChanged(bool? value, int index) {
+    setState(() {
+      if (value ?? false) {
+        selectedIndices.add(index);
+      } else {
+        selectedIndices.remove(index);
+      }
+      hasSelection = selectedIndices.isNotEmpty;
+    });
+  }
+
   PaginatedDataTable _buildPaginatedDataTable(_HSLColorDataTableSource dataSource, int dataTableRowsPerPage) {
-    final dataTable = PaginatedDataTable(
-      columns: const [
-        DataColumn(
-          label: Text('H'),
-        ),
-        DataColumn(
-          label: Text('S'),
-        ),
-        DataColumn(
-          label: Text('L'),
-        ),
-        DataColumn(
-          label: Text('A'),
-        ),
+    return PaginatedDataTable(
+      columns: [
+        _buildDataColumn("H"),
+        _buildDataColumn("S"),
+        _buildDataColumn("L"),
+        _buildDataColumn("A"),
       ],
-      source: dataSource,
+      columnSpacing: 14,
+      showFirstLastButtons: true,
       rowsPerPage: dataTableRowsPerPage,
+      source: dataSource,
     );
-    return dataTable;
+  }
+
+  DataColumn _buildDataColumn(String label) {
+    final editButtonOrSpace = Visibility(
+        child: IconButton(iconSize: 18, onPressed: () {}, icon: const Icon(Icons.edit)),
+        visible: hasSelection,
+        maintainState: true,
+        maintainAnimation: true,
+        maintainSize: true);
+    return DataColumn(label: Row(children: [Text(label), editButtonOrSpace]));
   }
 }
