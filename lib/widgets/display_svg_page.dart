@@ -1,4 +1,5 @@
 import 'package:ccosvg/models/svg_document.dart';
+import 'package:ccosvg/widgets/change_color_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -70,7 +71,7 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
               SizedBox(
                 width: double.infinity,
                 height: dataTableHeight,
-                child: _buildPaginatedDataTable(dataSource, dataTableRowsPerPage),
+                child: _buildPaginatedDataTable(context, dataSource, dataTableRowsPerPage),
               ),
               Divider(
                 color: Theme.of(context).dividerColor,
@@ -98,7 +99,7 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
                 SizedBox(
                   width: deviceWidth * 0.5,
                   height: double.infinity,
-                  child: _buildPaginatedDataTable(dataSource, dataTableRowsPerPage),
+                  child: _buildPaginatedDataTable(context, dataSource, dataTableRowsPerPage),
                 ),
                 VerticalDivider(
                   color: Theme.of(context).dividerColor,
@@ -123,13 +124,14 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
     });
   }
 
-  PaginatedDataTable _buildPaginatedDataTable(_HSLColorDataTableSource dataSource, int dataTableRowsPerPage) {
+  PaginatedDataTable _buildPaginatedDataTable(
+      BuildContext context, _HSLColorDataTableSource dataSource, int dataTableRowsPerPage) {
     return PaginatedDataTable(
       columns: [
-        _buildDataColumn("H"),
-        _buildDataColumn("S"),
-        _buildDataColumn("L"),
-        _buildDataColumn("A"),
+        _buildDataColumn(context, "H"),
+        _buildDataColumn(context, "S"),
+        _buildDataColumn(context, "L"),
+        _buildDataColumn(context, "A"),
       ],
       columnSpacing: 14,
       showFirstLastButtons: true,
@@ -138,13 +140,23 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
     );
   }
 
-  DataColumn _buildDataColumn(String label) {
+  DataColumn _buildDataColumn(BuildContext context, String label) {
     final editButtonOrSpace = Visibility(
-        child: IconButton(iconSize: 18, onPressed: () {}, icon: const Icon(Icons.edit)),
+        child: IconButton(
+            iconSize: 18,
+            onPressed: () async {
+              final delta = await showDialog(context: context, builder: (_) => ChangeColorDialog(label));
+              _updateColors(context, label, delta);
+            },
+            icon: const Icon(Icons.edit)),
         visible: hasSelection,
         maintainState: true,
         maintainAnimation: true,
         maintainSize: true);
     return DataColumn(label: Row(children: [Text(label), editButtonOrSpace]));
+  }
+
+  void _updateColors(BuildContext context, String label, int delta) {
+    // TODO
   }
 }
