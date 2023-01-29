@@ -1,6 +1,6 @@
-import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:ccosvg/helpers/show_message.dart';
 import 'package:ccosvg/models/svg_document.dart';
 import 'package:ccosvg/widgets/change_color_dialog.dart';
 import 'package:file_saver/file_saver.dart';
@@ -51,12 +51,14 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
   List<SvgColor> svgColors = [];
   Set<int> selectedIndices = {};
   bool hasSelection = false;
+  int? firstVisibleRowIndex;
 
   @override
   void initState() {
     super.initState();
     svgBytes = widget.svgBytes;
     svgColors = SvgDocument(svgBytes).getColors();
+    firstVisibleRowIndex = svgColors.isEmpty ? null : 0;
   }
 
   @override
@@ -159,8 +161,41 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
         _buildDataColumn(context, "L"),
         _buildDataColumn(context, "A"),
       ],
+      onSelectAll: (value) async {
+        final yes = await showYesNo(context, "Select/Deselect All", "Target all items on all pages?");
+        if (yes ?? false) {
+          setState(() {
+            selectedIndices = (value ?? false) ? svgColors.asMap().entries.map((e) => e.key).toSet() : {};
+            hasSelection = value ?? false;
+          });
+        } else {
+          setState(() {
+            List<int> indices = [];
+            final indexStart = firstVisibleRowIndex;
+            if (indexStart != null) {
+              final indexEnd = indexStart + dataTableRowsPerPage;
+              var index = indexStart;
+              while (index < indexEnd) {
+                indices.add(index);
+                ++index;
+              }
+            }
+            if (value ?? false) {
+              selectedIndices.addAll(indices);
+            } else {
+              selectedIndices.removeAll(indices);
+            }
+            hasSelection = selectedIndices.isNotEmpty;
+          });
+        }
+      },
       columnSpacing: 14,
       showFirstLastButtons: true,
+      onPageChanged: (value) {
+        setState(() {
+          firstVisibleRowIndex = value;
+        });
+      },
       rowsPerPage: dataTableRowsPerPage,
       source: dataSource,
     );
