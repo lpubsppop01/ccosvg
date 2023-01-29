@@ -1,12 +1,14 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:ccosvg/models/svg_document.dart';
 import 'package:ccosvg/widgets/change_color_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class DisplaySvgPage extends StatefulWidget {
-  final SvgDocument svgDocument;
-  final List<SvgColor> svgColors;
-  const DisplaySvgPage(this.svgDocument, this.svgColors, {Key? key}) : super(key: key);
+  final Uint8List svgBytes;
+  const DisplaySvgPage(this.svgBytes, {Key? key}) : super(key: key);
   @override
   State<StatefulWidget> createState() => _DisplaySvgPageState();
 }
@@ -44,8 +46,17 @@ class _HSLColorDataTableSource extends DataTableSource {
 }
 
 class _DisplaySvgPageState extends State<DisplaySvgPage> {
+  var svgBytes = Uint8List(0);
+  List<SvgColor> svgColors = [];
   Set<int> selectedIndices = {};
   bool hasSelection = false;
+
+  @override
+  void initState() {
+    super.initState();
+    svgBytes = widget.svgBytes;
+    svgColors = SvgDocument(svgBytes).getColors();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +68,7 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
   }
 
   Widget _buildPortrait(BuildContext context, double deviceWidth, double deviceHeight) {
-    final dataSource = _HSLColorDataTableSource(widget.svgColors, selectedIndices, _onSelectionChanged);
+    final dataSource = _HSLColorDataTableSource(svgColors, selectedIndices, _onSelectionChanged);
     final dataTableHeightMax = deviceHeight * 0.5 - 56 - 56 - 56 - 8;
     final dataTableRowsPerPage = (dataTableHeightMax / kMinInteractiveDimension).truncate();
     final dataTableHeight = dataTableRowsPerPage * kMinInteractiveDimension + 56 + 56 + 8;
@@ -79,13 +90,13 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
                 height: 1,
               ),
               Expanded(
-                child: SvgPicture.memory(widget.svgDocument.bytes),
+                child: SvgPicture.memory(svgBytes),
               ),
             ])));
   }
 
   Widget _buildLandscape(BuildContext context, double deviceWidth, double deviceHeight) {
-    final dataSource = _HSLColorDataTableSource(widget.svgColors, selectedIndices, _onSelectionChanged);
+    final dataSource = _HSLColorDataTableSource(svgColors, selectedIndices, _onSelectionChanged);
     final dataTableHeightMax = deviceHeight - 56 - 56 - 56 - 8;
     final dataTableRowsPerPage = (dataTableHeightMax / kMinInteractiveDimension).truncate();
     return Scaffold(
@@ -107,7 +118,7 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
                   width: 1,
                 ),
                 Expanded(
-                  child: SvgPicture.memory(widget.svgDocument.bytes),
+                  child: SvgPicture.memory(svgBytes),
                 ),
               ],
             )));
@@ -157,6 +168,28 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
   }
 
   void _updateColors(BuildContext context, String label, int delta) {
-    // TODO
+    setState(() {
+      // Update svgColors
+      for (var index in selectedIndices) {
+        if (label == 'H') {
+          final newHue = svgColors[index].hslColor.hue + delta;
+          svgColors[index].hslColor = svgColors[index].hslColor.withHue(newHue);
+        } else if (label == 'S') {
+          final newSaturation = svgColors[index].hslColor.saturation + delta / 100.0;
+          svgColors[index].hslColor = svgColors[index].hslColor.withSaturation(newSaturation);
+        } else if (label == 'L') {
+          final newLightness = svgColors[index].hslColor.lightness + delta / 100.0;
+          svgColors[index].hslColor = svgColors[index].hslColor.withLightness(newLightness);
+        } else if (label == 'A') {
+          final newAlpha = svgColors[index].hslColor.alpha + delta / 100.0;
+          svgColors[index].hslColor = svgColors[index].hslColor.withAlpha(newAlpha);
+        }
+      }
+
+      // Update svgBytes
+      final svgDocument = SvgDocument(svgBytes);
+      svgDocument.setColors(svgColors);
+      svgBytes = svgDocument.bytes;
+    });
   }
 }
