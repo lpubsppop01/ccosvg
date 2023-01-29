@@ -1,3 +1,4 @@
+import 'package:ccosvg/helpers/show_message.dart';
 import 'package:ccosvg/models/svg_document.dart';
 import 'package:ccosvg/widgets/display_svg_page.dart';
 import 'package:file_picker/file_picker.dart';
@@ -79,13 +80,16 @@ class _MyHomePageState extends State<MyHomePage> {
             ElevatedButton(
                 onPressed: () async {
                   var result = await FilePicker.platform.pickFiles();
-                  if (result == null) return;
+                  if (result == null) {
+                    showMessage(context, "Error", "FilePicker.platform.pickFiles() returned null. Please retry.");
+                    return;
+                  }
                   var svgBytes = result.files.first.bytes;
-                  if (svgBytes == null) return;
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute<void>(
-                          builder: (context) => DisplaySvgPage(svgBytes)));
+                  if (svgBytes == null) {
+                    showMessage(context, "Error", "result.files.first.bytes is null. Please retry.");
+                    return;
+                  }
+                  Navigator.push(context, MaterialPageRoute<void>(builder: (context) => DisplaySvgPage(svgBytes)));
                 },
                 child: const Text('Open SVG File'))
           ],
