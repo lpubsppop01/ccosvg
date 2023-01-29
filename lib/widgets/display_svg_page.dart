@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:ccosvg/models/svg_document.dart';
 import 'package:ccosvg/widgets/change_color_dialog.dart';
+import 'package:file_saver/file_saver.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -90,7 +91,12 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
                 height: 1,
               ),
               Expanded(
-                child: SvgPicture.memory(svgBytes),
+                child: Stack(children: [
+                  SvgPicture.memory(svgBytes),
+                  Align(
+                      alignment: Alignment.topRight,
+                      child: IconButton(onPressed: downloadSvgFile, icon: const Icon(Icons.download))),
+                ]),
               ),
             ])));
   }
@@ -118,7 +124,16 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
                   width: 1,
                 ),
                 Expanded(
-                  child: SvgPicture.memory(svgBytes),
+                  child: Stack(children: [
+                    SvgPicture.memory(svgBytes),
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: IconButton(
+                        onPressed: downloadSvgFile,
+                        icon: const Icon(Icons.download),
+                      ),
+                    )
+                  ]),
                 ),
               ],
             )));
@@ -191,5 +206,9 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
       svgDocument.setColors(svgColors);
       svgBytes = svgDocument.bytes;
     });
+  }
+
+  void downloadSvgFile() {
+    FileSaver.instance.saveFile("ccosvg_result", svgBytes, "svg");
   }
 }
