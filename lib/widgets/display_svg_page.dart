@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:ccosvg/helpers/hsl_color_with_delta.dart';
 import 'package:ccosvg/helpers/show_message.dart';
 import 'package:ccosvg/models/svg_document.dart';
 import 'package:ccosvg/widgets/change_color_dialog.dart';
@@ -222,17 +223,13 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
       // Update svgColors
       for (var index in selectedIndices) {
         if (label == 'H') {
-          final newHue = svgColors[index].hslColor.hue + delta;
-          svgColors[index].hslColor = svgColors[index].hslColor.withHue(newHue);
+          svgColors[index].hslColor = svgColors[index].hslColor.withHueDelta(delta);
         } else if (label == 'S') {
-          final newSaturation = svgColors[index].hslColor.saturation + delta / 100.0;
-          svgColors[index].hslColor = svgColors[index].hslColor.withSaturation(newSaturation);
+          svgColors[index].hslColor = svgColors[index].hslColor.withSaturationDelta(delta / 100.0);
         } else if (label == 'L') {
-          final newLightness = svgColors[index].hslColor.lightness + delta / 100.0;
-          svgColors[index].hslColor = svgColors[index].hslColor.withLightness(newLightness);
+          svgColors[index].hslColor = svgColors[index].hslColor.withLightnessDelta(delta / 100.0);
         } else if (label == 'A') {
-          final newAlpha = svgColors[index].hslColor.alpha + delta / 100.0;
-          svgColors[index].hslColor = svgColors[index].hslColor.withAlpha(newAlpha);
+          svgColors[index].hslColor = svgColors[index].hslColor.withAlphaDelta(delta / 100.0);
         }
       }
 
