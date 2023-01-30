@@ -33,7 +33,6 @@ class _HSLColorDataTableSource extends DataTableSource {
           DataCell(Text(color.hslColor.hue.toStringAsFixed(1))),
           DataCell(Text((color.hslColor.saturation * 100).toStringAsFixed(1))),
           DataCell(Text((color.hslColor.lightness * 100).toStringAsFixed(1))),
-          DataCell(Text((color.hslColor.alpha * 100).toStringAsFixed(1))),
         ]);
   }
 
@@ -160,7 +159,6 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
         _buildDataColumn(context, "H"),
         _buildDataColumn(context, "S"),
         _buildDataColumn(context, "L"),
-        _buildDataColumn(context, "A"),
       ],
       onSelectAll: (value) async {
         final yes = await showYesNo(context, "Select/Deselect All", "Target all items on all pages?");
@@ -228,8 +226,6 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
           svgColors[index].hslColor = svgColors[index].hslColor.withSaturationDelta(delta / 100.0);
         } else if (label == 'L') {
           svgColors[index].hslColor = svgColors[index].hslColor.withLightnessDelta(delta / 100.0);
-        } else if (label == 'A') {
-          svgColors[index].hslColor = svgColors[index].hslColor.withAlphaDelta(delta / 100.0);
         }
       }
 

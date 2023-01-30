@@ -44,8 +44,6 @@ class _ChangeColorDialogState extends State<ChangeColorDialog> {
         return "Saturation";
       case "L":
         return "Lightness";
-      case "A":
-        return "Alpha";
       default:
         return widget.label;
     }
