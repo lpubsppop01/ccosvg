@@ -244,6 +244,6 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
   }
 
   void downloadSvgFile() {
-    FileSaver.instance.saveFile("ccosvg_result", svgBytes, "svg");
+    FileSaver.instance.saveFile("ccosvg_result.svg", svgBytes, "");
   }
 }
