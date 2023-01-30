@@ -17,9 +17,12 @@ class _ChangeColorDialogState extends State<ChangeColorDialog> {
         title: Text("Delta of ${_getLongLabel()}"),
         content: TextField(
           controller: _textEditController,
-          keyboardType: TextInputType.number,
+          keyboardType: const TextInputType.numberWithOptions(signed: true),
           textAlign: TextAlign.right,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          inputFormatters: [
+            TextInputFormatter.withFunction(
+                (oldValue, newValue) => RegExp(r"^-?[0-9]*$").hasMatch(newValue.text) ? newValue : oldValue)
+          ],
         ),
         actions: [
           TextButton(
