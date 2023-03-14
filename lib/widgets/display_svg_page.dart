@@ -33,6 +33,14 @@ class _HSLColorDataTableSource extends DataTableSource {
           DataCell(Text(color.hslColor.hue.toStringAsFixed(1))),
           DataCell(Text((color.hslColor.saturation * 100).toStringAsFixed(1))),
           DataCell(Text((color.hslColor.lightness * 100).toStringAsFixed(1))),
+          DataCell(Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: color.hslColor.toColor(),
+                border: Border.all(color: Colors.grey, width: 1),
+                borderRadius: BorderRadius.circular(2),
+              ))),
         ]);
   }
 
@@ -159,6 +167,7 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
         _buildDataColumn(context, "H"),
         _buildDataColumn(context, "S"),
         _buildDataColumn(context, "L"),
+        const DataColumn(label: Text("")),
       ],
       onSelectAll: (value) async {
         final yes = await showYesNo(context, "Select/Deselect All", "Target all items on all pages?");
