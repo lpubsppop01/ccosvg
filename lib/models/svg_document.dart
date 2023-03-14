@@ -2,20 +2,12 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:ccosvg/helpers/string_to_color.dart';
+import 'package:ccosvg/models/svg_color.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
 import 'package:xml/xml.dart';
 import 'package:csslib/parser.dart' as csslib_parser;
 import 'package:csslib/visitor.dart' as csslib_visitor;
-
-class SvgColor {
-  final int elementIndex;
-  final String? attributeName;
-  final int startOffsetInText;
-  final int endOffsetInText;
-  HSLColor hslColor;
-  SvgColor(this.elementIndex, this.attributeName, this.startOffsetInText, this.endOffsetInText, this.hslColor);
-}
 
 class _MyVisitor extends csslib_visitor.Visitor {
   int elementIndex;

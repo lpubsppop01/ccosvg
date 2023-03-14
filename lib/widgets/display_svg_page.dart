@@ -2,6 +2,8 @@ import 'dart:typed_data';
 
 import 'package:ccosvg/helpers/hsl_color_with_delta.dart';
 import 'package:ccosvg/helpers/show_message.dart';
+import 'package:ccosvg/models/equal_svg_color_set.dart';
+import 'package:ccosvg/models/svg_color.dart';
 import 'package:ccosvg/models/svg_document.dart';
 import 'package:ccosvg/widgets/change_color_dialog.dart';
 import 'package:file_saver/file_saver.dart';
@@ -16,28 +18,29 @@ class DisplaySvgPage extends StatefulWidget {
 }
 
 class _HSLColorDataTableSource extends DataTableSource {
-  final List<SvgColor> colors;
+  final List<EqualSvgColorSet> colorSets;
   final Set<int> selectedIndices;
   final Function(bool?, int) onSelectionChanged;
-  _HSLColorDataTableSource(this.colors, this.selectedIndices, this.onSelectionChanged);
+  _HSLColorDataTableSource(this.colorSets, this.selectedIndices, this.onSelectionChanged);
 
   @override
   DataRow? getRow(int index) {
-    if (index < 0 || index >= colors.length) return null;
-    final color = colors[index];
+    if (index < 0 || index >= colorSets.length) return null;
+    final colorSet = colorSets[index];
+    final hslColor = colorSet.representingValue;
     return DataRow.byIndex(
         index: index,
         selected: selectedIndices.contains(index),
         onSelectChanged: (value) => onSelectionChanged(value, index),
         cells: [
-          DataCell(Text(color.hslColor.hue.toStringAsFixed(1))),
-          DataCell(Text((color.hslColor.saturation * 100).toStringAsFixed(1))),
-          DataCell(Text((color.hslColor.lightness * 100).toStringAsFixed(1))),
+          DataCell(Text(hslColor.hue.toStringAsFixed(1))),
+          DataCell(Text((hslColor.saturation * 100).toStringAsFixed(1))),
+          DataCell(Text((hslColor.lightness * 100).toStringAsFixed(1))),
           DataCell(Container(
               width: 24,
               height: 24,
               decoration: BoxDecoration(
-                color: color.hslColor.toColor(),
+                color: hslColor.toColor(),
                 border: Border.all(color: Colors.grey, width: 1),
                 borderRadius: BorderRadius.circular(2),
               ))),
@@ -48,7 +51,7 @@ class _HSLColorDataTableSource extends DataTableSource {
   bool get isRowCountApproximate => false;
 
   @override
-  int get rowCount => colors.length;
+  int get rowCount => colorSets.length;
 
   @override
   int get selectedRowCount => selectedIndices.length;
@@ -57,6 +60,7 @@ class _HSLColorDataTableSource extends DataTableSource {
 class _DisplaySvgPageState extends State<DisplaySvgPage> {
   var svgBytes = Uint8List(0);
   List<SvgColor> svgColors = [];
+  List<EqualSvgColorSet> svgColorSets = [];
   Set<int> selectedIndices = {};
   bool hasSelection = false;
   int? firstVisibleRowIndex;
@@ -66,6 +70,7 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
     super.initState();
     svgBytes = widget.svgBytes;
     svgColors = SvgDocument(svgBytes).getColors();
+    svgColorSets = summarizeSvgColors(svgColors, 36, 0.1);
     firstVisibleRowIndex = svgColors.isEmpty ? null : 0;
   }
 
@@ -79,7 +84,7 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
   }
 
   Widget _buildPortrait(BuildContext context, double deviceWidth, double deviceHeight) {
-    final dataSource = _HSLColorDataTableSource(svgColors, selectedIndices, _onSelectionChanged);
+    final dataSource = _HSLColorDataTableSource(svgColorSets, selectedIndices, _onSelectionChanged);
     final dataTableHeightMax = deviceHeight * 0.5 - 56 - 56 - 56 - 8;
     final dataTableRowsPerPage = (dataTableHeightMax / kMinInteractiveDimension).truncate();
     final dataTableHeight = dataTableRowsPerPage * kMinInteractiveDimension + 56 + 56 + 8;
@@ -112,7 +117,7 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
   }
 
   Widget _buildLandscape(BuildContext context, double deviceWidth, double deviceHeight) {
-    final dataSource = _HSLColorDataTableSource(svgColors, selectedIndices, _onSelectionChanged);
+    final dataSource = _HSLColorDataTableSource(svgColorSets, selectedIndices, _onSelectionChanged);
     final dataTableHeightMax = deviceHeight - 56 - 56 - 56 - 8;
     final dataTableRowsPerPage = (dataTableHeightMax / kMinInteractiveDimension).truncate();
     return Scaffold(
