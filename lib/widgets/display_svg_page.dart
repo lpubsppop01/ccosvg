@@ -90,7 +90,7 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
     final dataTableHeight = dataTableRowsPerPage * kMinInteractiveDimension + 56 + 56 + 8;
     return Scaffold(
         appBar: AppBar(
-          title: const Text("Display SVG"),
+          title: const Text("Change Colors"),
         ),
         body: SizedBox(
             width: double.infinity,
