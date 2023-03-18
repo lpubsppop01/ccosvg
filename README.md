@@ -1,4 +1,4 @@
-# ccosvg
+# CCoSVG
 
 A new Flutter project.
 

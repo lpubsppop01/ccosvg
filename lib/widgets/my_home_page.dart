@@ -55,7 +55,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 final info = await PackageInfo.fromPlatform();
                 showAboutDialog(
                   context: context,
-                  applicationName: info.appName,
+                  applicationName: 'CCoSVG',
                   applicationVersion: '${info.version} (${info.buildNumber})',
                   applicationIcon: null,
                   applicationLegalese: null,
