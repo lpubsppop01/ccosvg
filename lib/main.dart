@@ -1,7 +1,17 @@
 import 'package:ccosvg/widgets/my_home_page.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
-void main() {
+import 'firebase_options.dart';
+
+void main() async {
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  await FirebaseAnalytics.instance.logAppOpen();
+
   runApp(const MyApp());
 }
 
