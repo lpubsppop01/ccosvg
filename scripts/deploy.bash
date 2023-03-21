@@ -1,5 +1,20 @@
 #! /usr/bin/env bash
 
+# Select deployment target
+while true; do
+    read -p 'Deployment target is production or staging? (p/s)' PS
+    case $PS in
+        [Pp]*)
+            DEPLOYMENT_TARGET=production
+            break;;
+        [Ss]*)
+            DEPLOYMENT_TARGET=staging
+            break;;
+        *)
+            echo "Please answer production or staging.";;
+    esac
+done
+
 # Function to increment build number
 incremenet_build_number() {
     PROJECT_DIR=$(dirname $(dirname $0))
@@ -14,8 +29,8 @@ incremenet_build_number() {
 
 # Increment build number 
 while true; do
-    read -p 'Increment build number? (y/n)' INCREMENTS_BUILD_NUMBER
-    case $INCREMENTS_BUILD_NUMBER in
+    read -p 'Increment build number? (y/n)' YN
+    case $YN in
         [Yy]*)
             incremenet_build_number
             break;;
@@ -26,12 +41,13 @@ while true; do
     esac
 done
 
-# Delete existing remote production branch
+# Delete existing remote branch
 while true; do
-    read -p 'Delete existing remote "production" branch? (y/n)' DELETES_PRODUCTIOIN_BRANCH
-    case $DELETES_PRODUCTIOIN_BRANCH in
+    read -p "Delete existing \"$DEPLOYMENT_TARGET\" branch? (y/n)" YN
+    case $YN in
         [Yy]*)
-            git push origin :production
+            git branch -D $DEPLOYMENT_TARGET
+            git push origin :$DEPLOYMENT_TARGET
             break;;
         [Nn]*)
             break;;
@@ -42,5 +58,5 @@ done
 
 # Build and push
 flutter pub global activate peanut && \
-flutter pub global run peanut -b production --web-renderer canvaskit && \
-git push origin production
+flutter pub global run peanut -b $DEPLOYMENT_TARGET --web-renderer canvaskit && \
+git push origin $DEPLOYMENT_TARGET
