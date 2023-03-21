@@ -243,6 +243,14 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
         }
       }
 
+      // Update svgColorSets
+      List<EqualSvgColorSet> newSvgColorSets = [];
+      for (var svgColorSet in svgColorSets) {
+        var newSvgColorSet = EqualSvgColorSet(svgColorSet.colors[0].hslColor, svgColorSet.colors);
+        newSvgColorSets.add(newSvgColorSet);
+      }
+      svgColorSets = newSvgColorSets;
+
       // Update svgBytes
       final svgDocument = SvgDocument(svgBytes);
       svgDocument.setColors(svgColors);
