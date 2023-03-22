@@ -6,6 +6,7 @@ import 'package:ccosvg/models/equal_svg_color_set.dart';
 import 'package:ccosvg/models/svg_color.dart';
 import 'package:ccosvg/models/svg_document.dart';
 import 'package:ccosvg/widgets/change_color_dialog.dart';
+import 'package:ccosvg/widgets/change_color_panel.dart';
 import 'package:file_saver/file_saver.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -64,6 +65,7 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
   Set<int> selectedIndices = {};
   bool hasSelection = false;
   int? firstVisibleRowIndex;
+  String? editingLabel;
 
   @override
   void initState() {
@@ -95,10 +97,14 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
         body: SizedBox(
             width: double.infinity,
             child: Column(children: [
-              SizedBox(
-                width: double.infinity,
-                height: dataTableHeight,
-                child: _buildPaginatedDataTable(context, dataSource, dataTableRowsPerPage),
+              Stack(
+                children: [
+                  SizedBox(
+                      width: double.infinity,
+                      height: dataTableHeight,
+                      child: _buildPaginatedDataTable(context, dataSource, dataTableRowsPerPage)),
+                  SizedBox(width: double.infinity, height: dataTableHeight, child: _buildChangeColorPanel(context)),
+                ],
               ),
               Divider(
                 color: Theme.of(context).dividerColor,
@@ -131,7 +137,13 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
                 SizedBox(
                   width: deviceWidth * 0.5,
                   height: double.infinity,
-                  child: _buildPaginatedDataTable(context, dataSource, dataTableRowsPerPage),
+                  child: Stack(children: [
+                    SizedBox(
+                        width: deviceWidth * 0.5,
+                        height: double.infinity,
+                        child: _buildPaginatedDataTable(context, dataSource, dataTableRowsPerPage)),
+                    SizedBox(width: deviceWidth * 0.5, height: double.infinity, child: _buildChangeColorPanel(context)),
+                  ]),
                 ),
                 VerticalDivider(
                   color: Theme.of(context).dividerColor,
@@ -165,53 +177,54 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
     });
   }
 
-  PaginatedDataTable _buildPaginatedDataTable(
-      BuildContext context, _HSLColorDataTableSource dataSource, int dataTableRowsPerPage) {
-    return PaginatedDataTable(
-      columns: [
-        _buildDataColumn(context, "H"),
-        _buildDataColumn(context, "S"),
-        _buildDataColumn(context, "L"),
-        const DataColumn(label: Text("")),
-      ],
-      onSelectAll: (value) async {
-        final yes = await showYesNo(context, "Select/Deselect All", "Target all items on all pages?");
-        if (yes ?? false) {
-          setState(() {
-            selectedIndices = (value ?? false) ? svgColors.asMap().entries.map((e) => e.key).toSet() : {};
-            hasSelection = value ?? false;
-          });
-        } else {
-          setState(() {
-            List<int> indices = [];
-            final indexStart = firstVisibleRowIndex;
-            if (indexStart != null) {
-              final indexEnd = indexStart + dataTableRowsPerPage;
-              var index = indexStart;
-              while (index < indexEnd) {
-                indices.add(index);
-                ++index;
-              }
-            }
-            if (value ?? false) {
-              selectedIndices.addAll(indices);
+  Widget _buildPaginatedDataTable(BuildContext context, _HSLColorDataTableSource dataSource, int dataTableRowsPerPage) {
+    return Visibility(
+        child: PaginatedDataTable(
+          columns: [
+            _buildDataColumn(context, "H"),
+            _buildDataColumn(context, "S"),
+            _buildDataColumn(context, "L"),
+            const DataColumn(label: Text("")),
+          ],
+          onSelectAll: (value) async {
+            final yes = await showYesNo(context, "Select/Deselect All", "Target all items on all pages?");
+            if (yes ?? false) {
+              setState(() {
+                selectedIndices = (value ?? false) ? svgColors.asMap().entries.map((e) => e.key).toSet() : {};
+                hasSelection = value ?? false;
+              });
             } else {
-              selectedIndices.removeAll(indices);
+              setState(() {
+                List<int> indices = [];
+                final indexStart = firstVisibleRowIndex;
+                if (indexStart != null) {
+                  final indexEnd = indexStart + dataTableRowsPerPage;
+                  var index = indexStart;
+                  while (index < indexEnd) {
+                    indices.add(index);
+                    ++index;
+                  }
+                }
+                if (value ?? false) {
+                  selectedIndices.addAll(indices);
+                } else {
+                  selectedIndices.removeAll(indices);
+                }
+                hasSelection = selectedIndices.isNotEmpty;
+              });
             }
-            hasSelection = selectedIndices.isNotEmpty;
-          });
-        }
-      },
-      columnSpacing: 14,
-      showFirstLastButtons: true,
-      onPageChanged: (value) {
-        setState(() {
-          firstVisibleRowIndex = value;
-        });
-      },
-      rowsPerPage: dataTableRowsPerPage,
-      source: dataSource,
-    );
+          },
+          columnSpacing: 14,
+          showFirstLastButtons: true,
+          onPageChanged: (value) {
+            setState(() {
+              firstVisibleRowIndex = value;
+            });
+          },
+          rowsPerPage: dataTableRowsPerPage,
+          source: dataSource,
+        ),
+        visible: editingLabel == null);
   }
 
   DataColumn _buildDataColumn(BuildContext context, String label) {
@@ -219,8 +232,9 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
         child: IconButton(
             iconSize: 18,
             onPressed: () async {
-              final delta = await showDialog(context: context, builder: (_) => ChangeColorDialog(label));
-              _updateColors(context, label, delta);
+              setState(() {
+                editingLabel = label;
+              });
             },
             icon: const Icon(Icons.edit)),
         visible: hasSelection,
@@ -228,6 +242,22 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
         maintainAnimation: true,
         maintainSize: true);
     return DataColumn(label: Row(children: [Text(label), editButtonOrSpace]));
+  }
+
+  Widget _buildChangeColorPanel(BuildContext context) {
+    var label = editingLabel ?? "";
+    return Visibility(
+        child: ChangeColorPanel(label, onDecided: (delta) {
+          _updateColors(context, label, delta);
+          setState(() {
+            editingLabel = null;
+          });
+        }, onCancelled: () {
+          setState(() {
+            editingLabel = null;
+          });
+        }),
+        visible: editingLabel != null);
   }
 
   void _updateColors(BuildContext context, String label, int delta) {
