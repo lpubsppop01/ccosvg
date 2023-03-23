@@ -1,8 +1,10 @@
 import 'package:ccosvg/helpers/show_message.dart';
 import 'package:ccosvg/widgets/display_svg_page.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key, required this.title}) : super(key: key);
@@ -41,12 +43,28 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: () async {
                 final info = await PackageInfo.fromPlatform();
                 showAboutDialog(
-                  context: context,
-                  applicationName: 'CCoSVG',
-                  applicationVersion: '${info.version} (${info.buildNumber})',
-                  applicationIcon: null,
-                  applicationLegalese: null,
-                );
+                    context: context,
+                    applicationName: 'CCoSVG',
+                    applicationVersion: '${info.version} (${info.buildNumber})',
+                    applicationIcon: null,
+                    applicationLegalese: "©2023- lpubsppop01",
+                    children: [
+                      Padding(
+                          padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                          child: RichText(
+                              text: TextSpan(children: [
+                            TextSpan(
+                                text: "lpubsppop01/ccosvg",
+                                style: const TextStyle(decoration: TextDecoration.underline, color: Colors.blue),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () async {
+                                    final url = Uri.parse('https://github.com/lpubsppop01/ccosvg');
+                                    if (await canLaunchUrl(url)) {
+                                      await launchUrl(url);
+                                    }
+                                  }),
+                          ])))
+                    ]);
               },
               icon: const Icon(Icons.info)),
         ],
