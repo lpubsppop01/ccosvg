@@ -5,7 +5,6 @@ import 'package:ccosvg/helpers/show_message.dart';
 import 'package:ccosvg/models/equal_svg_color_set.dart';
 import 'package:ccosvg/models/svg_color.dart';
 import 'package:ccosvg/models/svg_document.dart';
-import 'package:ccosvg/widgets/change_color_dialog.dart';
 import 'package:ccosvg/widgets/change_color_panel.dart';
 import 'package:file_saver/file_saver.dart';
 import 'package:flutter/material.dart';
@@ -66,6 +65,9 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
   bool hasSelection = false;
   int? firstVisibleRowIndex;
   String? editingLabel;
+  Uint8List? backupSvgBytes;
+  List<SvgColor>? backupSvgColors;
+  List<EqualSvgColorSet>? backupSvgColorSets;
 
   @override
   void initState() {
@@ -74,6 +76,10 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
     svgColors = SvgDocument(svgBytes).getColors();
     svgColorSets = summarizeSvgColors(svgColors, 36, 0.1);
     firstVisibleRowIndex = svgColors.isEmpty ? null : 0;
+    editingLabel = null;
+    backupSvgBytes = null;
+    backupSvgColors = null;
+    backupSvgColorSets = null;
   }
 
   @override
@@ -234,6 +240,9 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
             onPressed: () async {
               setState(() {
                 editingLabel = label;
+                backupSvgBytes = Uint8List.fromList(svgBytes);
+                backupSvgColors = svgColors.map((e) => e.clone()).toList();
+                backupSvgColorSets = svgColorSets.map((e) => e.clone()).toList();
               });
             },
             icon: const Icon(Icons.edit)),
@@ -247,14 +256,32 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
   Widget _buildChangeColorPanel(BuildContext context) {
     var label = editingLabel ?? "";
     return Visibility(
-        child: ChangeColorPanel(label, onDecided: (delta) {
+        child: ChangeColorPanel(label, onChanged: (delta) {
+          svgBytes = Uint8List.fromList(backupSvgBytes ?? Uint8List(0));
+          svgColors = (backupSvgColors ?? []).map((e) => e.clone()).toList();
+          svgColorSets = (backupSvgColorSets ?? []).map((e) => e.clone()).toList();
+          _updateColors(context, label, delta);
+        }, onDecided: (delta) {
+          svgBytes = Uint8List.fromList(backupSvgBytes ?? Uint8List(0));
+          svgColors = (backupSvgColors ?? []).map((e) => e.clone()).toList();
+          svgColorSets = (backupSvgColorSets ?? []).map((e) => e.clone()).toList();
           _updateColors(context, label, delta);
           setState(() {
             editingLabel = null;
+            backupSvgBytes = null;
+            backupSvgColors = null;
+            backupSvgColorSets = null;
           });
         }, onCancelled: () {
           setState(() {
+            svgBytes = backupSvgBytes ?? Uint8List(0);
+            svgColors = backupSvgColors ?? [];
+            svgColorSets = backupSvgColorSets ?? [];
+
             editingLabel = null;
+            backupSvgBytes = null;
+            backupSvgColors = null;
+            backupSvgColorSets = null;
           });
         }),
         visible: editingLabel != null);

@@ -3,9 +3,10 @@ import 'package:flutter/services.dart';
 
 class ChangeColorPanel extends StatefulWidget {
   final String label;
+  final Function(int value)? onChanged;
   final Function(int value)? onDecided;
   final Function? onCancelled;
-  const ChangeColorPanel(this.label, {this.onDecided, this.onCancelled, Key? key}) : super(key: key);
+  const ChangeColorPanel(this.label, {this.onChanged, this.onDecided, this.onCancelled, Key? key}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() => _ChangeColorPanelState();
@@ -13,6 +14,16 @@ class ChangeColorPanel extends StatefulWidget {
 
 class _ChangeColorPanelState extends State<ChangeColorPanel> {
   final TextEditingController _textEditController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+
+    _textEditController.addListener(() {
+      widget.onChanged?.call(int.tryParse(_textEditController.text) ?? 0);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(

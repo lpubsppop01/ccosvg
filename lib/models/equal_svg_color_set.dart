@@ -1,10 +1,27 @@
 import 'package:ccosvg/models/svg_color.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 class EqualSvgColorSet {
   final HSLColor representingValue;
   List<SvgColor> colors;
+
   EqualSvgColorSet(this.representingValue, this.colors);
+
+  EqualSvgColorSet clone() {
+    var rv = representingValue;
+    return EqualSvgColorSet(
+        HSLColor.fromAHSL(rv.alpha, rv.hue, rv.saturation, rv.lightness), colors.map((e) => e.clone()).toList());
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (other is! EqualSvgColorSet) return false;
+    return representingValue == other.representingValue && listEquals(colors, other.colors);
+  }
+
+  @override
+  int get hashCode => Object.hash(representingValue, colors);
 }
 
 List<EqualSvgColorSet> summarizeSvgColors(List<SvgColor> colors,

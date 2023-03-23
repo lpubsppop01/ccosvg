@@ -10,6 +10,23 @@ void main() {
     expect(instance.representingValue, svgColor.hslColor);
     expect(instance.colors, [svgColor]);
   });
+  test('EqualSvgColorSet should be clonable', () {
+    var svgColor = SvgColor(0, "foo", 1, 2, const HSLColor.fromAHSL(1.0, 120, 0.8, 0.6));
+    var original = EqualSvgColorSet(svgColor.hslColor, [svgColor]);
+    var clone = original.clone();
+    expect(clone, original);
+  });
+  test('SvgColor should be comparable with == and !=', () {
+    var svgColor1 = SvgColor(0, "foo", 1, 2, const HSLColor.fromAHSL(1.0, 120, 0.8, 0.6));
+    var svgColor2 = SvgColor(1, "foo", 1, 2, const HSLColor.fromAHSL(0.5, 120, 0.8, 0.6));
+    var instance1 = EqualSvgColorSet(svgColor1.hslColor, [svgColor1, svgColor2]);
+    var instance2 = EqualSvgColorSet(svgColor1.hslColor, [svgColor1, svgColor2]);
+    var instance3 = EqualSvgColorSet(svgColor2.hslColor, [svgColor1, svgColor2]);
+    var instance4 = EqualSvgColorSet(svgColor1.hslColor, [svgColor1]);
+    expect(instance1 == instance2, true);
+    expect(instance1 != instance3, true);
+    expect(instance1 != instance4, true);
+  });
   test('summarizeSvgColors() should return a list of EqualSvgColorSet containing colors that are equal in tolerance',
       () {
     var svgColors = [
