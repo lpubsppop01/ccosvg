@@ -1,10 +1,12 @@
 import 'package:ccosvg/helpers/show_message.dart';
 import 'package:ccosvg/widgets/display_svg_page.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:url_launcher_web/url_launcher_web.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key, required this.title}) : super(key: key);
@@ -59,7 +61,13 @@ class _MyHomePageState extends State<MyHomePage> {
                                 recognizer: TapGestureRecognizer()
                                   ..onTap = () async {
                                     final url = Uri.parse('https://github.com/lpubsppop01/ccosvg');
-                                    if (await canLaunchUrl(url)) {
+                                    if (kIsWeb) {
+                                      // Use the plugin object directly because it didn't work as a plugin in the deployed site
+                                      var plugin = UrlLauncherPlugin();
+                                      if (await plugin.canLaunch(url.toString())) {
+                                        await plugin.launch(url.toString());
+                                      }
+                                    } else if (await canLaunchUrl(url)) {
                                       await launchUrl(url);
                                     }
                                   }),
