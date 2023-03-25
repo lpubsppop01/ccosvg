@@ -1,9 +1,9 @@
 import 'dart:typed_data';
 
-import 'package:ccosvg/helpers/hsl_color_with_delta.dart';
 import 'package:ccosvg/helpers/show_message.dart';
 import 'package:ccosvg/models/equal_svg_color_set.dart';
 import 'package:ccosvg/models/svg_color.dart';
+import 'package:ccosvg/models/svg_color_change.dart';
 import 'package:ccosvg/models/svg_document.dart';
 import 'package:ccosvg/widgets/change_color_panel.dart';
 import 'package:file_saver/file_saver.dart';
@@ -254,18 +254,29 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
   }
 
   Widget _buildChangeColorPanel(BuildContext context) {
-    var label = editingLabel ?? "";
+    var targetComponent = SvgColorChangeTargetComponent.hue;
+    switch (editingLabel ?? "") {
+      case "H":
+        targetComponent = SvgColorChangeTargetComponent.hue;
+        break;
+      case "S":
+        targetComponent = SvgColorChangeTargetComponent.saturation;
+        break;
+      case "L":
+        targetComponent = SvgColorChangeTargetComponent.lightness;
+        break;
+    }
     return Visibility(
-        child: ChangeColorPanel(label, onChanged: (delta) {
+        child: ChangeColorPanel(targetComponent, onChanged: (change) {
           svgBytes = Uint8List.fromList(backupSvgBytes ?? Uint8List(0));
           svgColors = (backupSvgColors ?? []).map((e) => e.clone()).toList();
           svgColorSets = (backupSvgColorSets ?? []).map((e) => e.clone()).toList();
-          _updateColors(context, label, delta);
-        }, onDecided: (delta) {
+          _updateColors(context, change);
+        }, onDecided: (change) {
           svgBytes = Uint8List.fromList(backupSvgBytes ?? Uint8List(0));
           svgColors = (backupSvgColors ?? []).map((e) => e.clone()).toList();
           svgColorSets = (backupSvgColorSets ?? []).map((e) => e.clone()).toList();
-          _updateColors(context, label, delta);
+          _updateColors(context, change);
           setState(() {
             editingLabel = null;
             backupSvgBytes = null;
@@ -287,17 +298,11 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
         visible: editingLabel != null);
   }
 
-  void _updateColors(BuildContext context, String label, int delta) {
+  void _updateColors(BuildContext context, SvgColorChange change) {
     setState(() {
       // Update svgColors
       for (var index in selectedIndices) {
-        if (label == 'H') {
-          svgColors[index].hslColor = svgColors[index].hslColor.withHueDelta(delta);
-        } else if (label == 'S') {
-          svgColors[index].hslColor = svgColors[index].hslColor.withSaturationDelta(delta / 100.0);
-        } else if (label == 'L') {
-          svgColors[index].hslColor = svgColors[index].hslColor.withLightnessDelta(delta / 100.0);
-        }
+        change.applyToColor(svgColors[index]);
       }
 
       // Update svgColorSets
