@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-void showMessage(BuildContext context, String title, String message) {
-  showDialog(
+Future showMessage(BuildContext context, String title, String message) async {
+  return await showDialog(
     context: context,
     builder: (context) => AlertDialog(
       title: Text(title),
@@ -16,8 +16,8 @@ void showMessage(BuildContext context, String title, String message) {
   );
 }
 
-Future<bool?> showYesNo(BuildContext context, String title, String message) {
-  return showDialog(
+Future<bool?> showYesNo(BuildContext context, String title, String message) async {
+  return await showDialog(
     context: context,
     builder: (context) => AlertDialog(
       title: Text(title),
@@ -29,7 +29,7 @@ Future<bool?> showYesNo(BuildContext context, String title, String message) {
         ),
         TextButton(
           child: const Text("Yes"),
-          onPressed: () =>  Navigator.pop(context, true),
+          onPressed: () => Navigator.pop(context, true),
         ),
       ],
     ),

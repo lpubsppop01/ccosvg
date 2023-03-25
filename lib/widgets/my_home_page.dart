@@ -85,12 +85,12 @@ class _MyHomePageState extends State<MyHomePage> {
                 onPressed: () async {
                   var result = await FilePicker.platform.pickFiles();
                   if (result == null) {
-                    showMessage(context, "Error", "FilePicker.platform.pickFiles() returned null. Please retry.");
+                    await showMessage(context, "Error", "FilePicker.platform.pickFiles() returned null. Please retry.");
                     return;
                   }
                   var svgBytes = result.files.first.bytes;
                   if (svgBytes == null) {
-                    showMessage(context, "Error", "result.files.first.bytes is null. Please retry.");
+                    await showMessage(context, "Error", "result.files.first.bytes is null. Please retry.");
                     return;
                   }
                   Navigator.push(context, MaterialPageRoute<void>(builder: (context) => DisplaySvgPage(svgBytes)));
