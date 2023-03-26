@@ -119,7 +119,7 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
               ),
               Expanded(
                 child: Stack(children: [
-                  SvgPicture.memory(svgBytes),
+                  SvgPicture.memory(SvgDocument(svgBytes).simplified().bytes),
                   Align(
                       alignment: Alignment.topRight,
                       child: IconButton(onPressed: downloadSvgFile, icon: const Icon(Icons.download))),
@@ -158,7 +158,7 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
                 ),
                 Expanded(
                   child: Stack(children: [
-                    SvgPicture.memory(svgBytes),
+                    SvgPicture.memory(SvgDocument(svgBytes).simplified().bytes),
                     Align(
                       alignment: Alignment.topRight,
                       child: IconButton(

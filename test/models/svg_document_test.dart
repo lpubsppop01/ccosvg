@@ -72,4 +72,32 @@ void main() {
 """;
     expect(actual, equals(expected));
   });
+  test('SvgDocument.simplified() should work', () {
+    const svgString = r"""
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg>
+<style type="text/css">
+  .st0{display:none;}
+  .st1{display:none;}
+</style>
+<g class="st0"/>
+<g class="st1" style="stroke:#ffffff"/>
+</svg>
+""";
+    final svgBytes = Uint8List.fromList(utf8.encode(svgString));
+    final svgDocument = SvgDocument(svgBytes);
+    final actual = utf8.decode(svgDocument.simplified().bytes);
+    const expected = """
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg>
+<style type="text/css">
+  .st0{display:none;}
+  .st1{display:none;}
+</style>
+<g class="st0" style="display:none;"/>
+<g class="st1" style="stroke:#ffffff"/>
+</svg>
+""";
+    expect(actual, expected);
+  });
 }
