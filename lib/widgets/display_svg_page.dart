@@ -1,18 +1,22 @@
-import 'dart:typed_data';
-
+import 'package:ccosvg/constants.dart';
 import 'package:ccosvg/helpers/show_message.dart';
 import 'package:ccosvg/models/equal_svg_color_set.dart';
 import 'package:ccosvg/models/svg_color.dart';
 import 'package:ccosvg/models/svg_color_change.dart';
 import 'package:ccosvg/models/svg_document.dart';
 import 'package:ccosvg/widgets/change_color_panel.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:file_saver/file_saver.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:url_launcher_web/url_launcher_web.dart';
 
 class DisplaySvgPage extends StatefulWidget {
-  final Uint8List svgBytes;
-  const DisplaySvgPage(this.svgBytes, {Key? key}) : super(key: key);
+  const DisplaySvgPage({Key? key}) : super(key: key);
   @override
   State<StatefulWidget> createState() => _DisplaySvgPageState();
 }
@@ -70,106 +74,135 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
   List<EqualSvgColorSet>? backupSvgColorSets;
 
   @override
-  void initState() {
-    super.initState();
-    svgBytes = widget.svgBytes;
-    svgColors = SvgDocument(svgBytes).getColors();
-    svgColorSets = summarizeSvgColors(svgColors, 36, 0.1);
-    firstVisibleRowIndex = svgColors.isEmpty ? null : 0;
-    editingLabel = null;
-    backupSvgBytes = null;
-    backupSvgColors = null;
-    backupSvgColorSets = null;
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final double deviceWidth = MediaQuery.of(context).size.width;
-    final double deviceHeight = MediaQuery.of(context).size.height;
-    return deviceWidth < deviceHeight
-        ? _buildPortrait(context, deviceWidth, deviceHeight)
-        : _buildLandscape(context, deviceWidth, deviceHeight);
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("CCoSVG"),
+        actions: [
+          IconButton(onPressed: _infoButtonPressed, icon: const Icon(Icons.info)),
+        ],
+      ),
+      body: _buildBody(),
+    );
   }
 
-  Widget _buildPortrait(BuildContext context, double deviceWidth, double deviceHeight) {
+  Widget _buildBody() {
+    if (svgBytes.isEmpty) {
+      return _buildInitialBody();
+    } else {
+      final double deviceWidth = MediaQuery.of(context).size.width;
+      final double deviceHeight = MediaQuery.of(context).size.height;
+      return deviceWidth < deviceHeight
+          ? _buildPortraitBody(context, deviceWidth, deviceHeight)
+          : _buildLandscapeBody(context, deviceWidth, deviceHeight);
+    }
+  }
+
+  Widget _buildInitialBody() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          ElevatedButton(
+            onPressed: _openSvgFileButtonPressed,
+            child: const Text('Open SVG File'),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPortraitBody(BuildContext context, double deviceWidth, double deviceHeight) {
     final dataSource = _HSLColorDataTableSource(svgColorSets, selectedIndices, _onSelectionChanged);
     final dataTableHeightMax = deviceHeight * 0.5 - 56 - 56 - 56 - 8;
     final dataTableRowsPerPage = (dataTableHeightMax / kMinInteractiveDimension).truncate();
     final dataTableHeight = dataTableRowsPerPage * kMinInteractiveDimension + 56 + 56 + 8;
-    return Scaffold(
-        appBar: AppBar(
-          title: const Text("Change Colors"),
-        ),
-        body: SizedBox(
-            width: double.infinity,
-            child: Column(children: [
-              Stack(
+    return SizedBox(
+      width: double.infinity,
+      child: Column(
+        children: [
+          Stack(
+            children: [
+              SizedBox(
+                  width: double.infinity,
+                  height: dataTableHeight,
+                  child: _buildPaginatedDataTable(context, dataSource, dataTableRowsPerPage)),
+              SizedBox(width: double.infinity, height: dataTableHeight, child: _buildChangeColorPanel(context)),
+            ],
+          ),
+          Divider(
+            color: Theme.of(context).dividerColor,
+            thickness: 1,
+            height: 1,
+          ),
+          Expanded(
+            child: Stack(children: [
+              SvgPicture.memory(SvgDocument(svgBytes).simplified().bytes),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  SizedBox(
-                      width: double.infinity,
-                      height: dataTableHeight,
-                      child: _buildPaginatedDataTable(context, dataSource, dataTableRowsPerPage)),
-                  SizedBox(width: double.infinity, height: dataTableHeight, child: _buildChangeColorPanel(context)),
+                  IconButton(
+                    onPressed: _downloadButtonPressed,
+                    icon: const Icon(Icons.download),
+                  ),
+                  IconButton(
+                    onPressed: _closeButtonPressed,
+                    icon: const Icon(Icons.close),
+                  ),
                 ],
               ),
-              Divider(
-                color: Theme.of(context).dividerColor,
-                thickness: 1,
-                height: 1,
-              ),
-              Expanded(
-                child: Stack(children: [
-                  SvgPicture.memory(SvgDocument(svgBytes).simplified().bytes),
-                  Align(
-                      alignment: Alignment.topRight,
-                      child: IconButton(onPressed: downloadSvgFile, icon: const Icon(Icons.download))),
-                ]),
-              ),
-            ])));
+            ]),
+          ),
+        ],
+      ),
+    );
   }
 
-  Widget _buildLandscape(BuildContext context, double deviceWidth, double deviceHeight) {
+  Widget _buildLandscapeBody(BuildContext context, double deviceWidth, double deviceHeight) {
     final dataSource = _HSLColorDataTableSource(svgColorSets, selectedIndices, _onSelectionChanged);
     final dataTableHeightMax = deviceHeight - 56 - 56 - 56 - 8;
     final dataTableRowsPerPage = (dataTableHeightMax / kMinInteractiveDimension).truncate();
-    return Scaffold(
-        appBar: AppBar(
-          title: const Text("Display SVG"),
-        ),
-        body: SizedBox(
-            width: double.infinity,
-            child: Row(
-              children: [
-                SizedBox(
+    return SizedBox(
+      width: double.infinity,
+      child: Row(
+        children: [
+          SizedBox(
+            width: deviceWidth * 0.5,
+            height: double.infinity,
+            child: Stack(children: [
+              SizedBox(
                   width: deviceWidth * 0.5,
                   height: double.infinity,
-                  child: Stack(children: [
-                    SizedBox(
-                        width: deviceWidth * 0.5,
-                        height: double.infinity,
-                        child: _buildPaginatedDataTable(context, dataSource, dataTableRowsPerPage)),
-                    SizedBox(width: deviceWidth * 0.5, height: double.infinity, child: _buildChangeColorPanel(context)),
-                  ]),
-                ),
-                VerticalDivider(
-                  color: Theme.of(context).dividerColor,
-                  thickness: 1,
-                  width: 1,
-                ),
-                Expanded(
-                  child: Stack(children: [
-                    SvgPicture.memory(SvgDocument(svgBytes).simplified().bytes),
-                    Align(
-                      alignment: Alignment.topRight,
-                      child: IconButton(
-                        onPressed: downloadSvgFile,
-                        icon: const Icon(Icons.download),
-                      ),
-                    )
-                  ]),
-                ),
-              ],
-            )));
+                  child: _buildPaginatedDataTable(context, dataSource, dataTableRowsPerPage)),
+              SizedBox(width: deviceWidth * 0.5, height: double.infinity, child: _buildChangeColorPanel(context)),
+            ]),
+          ),
+          VerticalDivider(
+            color: Theme.of(context).dividerColor,
+            thickness: 1,
+            width: 1,
+          ),
+          Expanded(
+            child: Stack(children: [
+              SvgPicture.memory(SvgDocument(svgBytes).simplified().bytes),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  IconButton(
+                    onPressed: _downloadButtonPressed,
+                    icon: const Icon(Icons.download),
+                  ),
+                  IconButton(
+                    onPressed: _closeButtonPressed,
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+            ]),
+          ),
+        ],
+      ),
+    );
   }
 
   void _onSelectionChanged(bool? value, int index) {
@@ -323,7 +356,76 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
     });
   }
 
-  void downloadSvgFile() {
+  void _openSvgFileButtonPressed() async {
+    var result = await FilePicker.platform.pickFiles();
+    if (result == null) {
+      await showMessage(context, "Error", "FilePicker.platform.pickFiles() returned null. Please retry.");
+      return;
+    }
+    var svgBytes = result.files.first.bytes;
+    if (svgBytes == null) {
+      await showMessage(context, "Error", "result.files.first.bytes is null. Please retry.");
+      return;
+    }
+    setState(() {
+      this.svgBytes = svgBytes;
+      svgColors = SvgDocument(svgBytes).getColors();
+      svgColorSets = summarizeSvgColors(svgColors, 36, 0.1);
+      firstVisibleRowIndex = svgColors.isEmpty ? null : 0;
+      editingLabel = null;
+      backupSvgBytes = null;
+      backupSvgColors = null;
+      backupSvgColorSets = null;
+    });
+  }
+
+  void _infoButtonPressed() async {
+    final info = await PackageInfo.fromPlatform();
+    showAboutDialog(
+        context: context,
+        applicationName: 'CCoSVG',
+        applicationVersion: '${info.version} (${info.buildNumber})',
+        applicationIcon: null,
+        applicationLegalese: "©2023- lpubsppop01",
+        children: [
+          Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+              child: RichText(
+                  text: TextSpan(children: [
+                TextSpan(
+                    text: "lpubsppop01/ccosvg",
+                    style: const TextStyle(decoration: TextDecoration.underline, color: Colors.blue),
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () async {
+                        final url = Uri.parse('https://github.com/lpubsppop01/ccosvg');
+                        if (kIsWeb) {
+                          // Use the plugin object directly because it didn't work as a plugin in the deployed site
+                          var plugin = UrlLauncherPlugin();
+                          if (await plugin.canLaunch(url.toString())) {
+                            await plugin.launch(url.toString());
+                          }
+                        } else if (await canLaunchUrl(url)) {
+                          await launchUrl(url);
+                        }
+                      }),
+              ])))
+        ]);
+  }
+
+  void _closeButtonPressed() {
+    setState(() {
+      svgBytes = Uint8List(0);
+      svgColors = [];
+      svgColorSets = [];
+      firstVisibleRowIndex = null;
+      editingLabel = null;
+      backupSvgBytes = null;
+      backupSvgColors = null;
+      backupSvgColorSets = null;
+    });
+  }
+
+  void _downloadButtonPressed() {
     FileSaver.instance.saveFile("ccosvg_result.svg", svgBytes, "");
   }
 }
