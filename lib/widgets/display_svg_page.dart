@@ -5,6 +5,7 @@ import 'package:ccosvg/models/svg_color.dart';
 import 'package:ccosvg/models/svg_color_change.dart';
 import 'package:ccosvg/models/svg_document.dart';
 import 'package:ccosvg/widgets/change_color_panel.dart';
+import 'package:ccosvg/widgets/checkerboard_panel.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:file_saver/file_saver.dart';
 import 'package:flutter/foundation.dart';
@@ -99,17 +100,27 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
   }
 
   Widget _buildInitialBody() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          ElevatedButton(
-            onPressed: _openSvgFileButtonPressed,
-            child: const Text('Open SVG File'),
-          )
-        ],
+    return Stack(children: [
+      CheckerboardPanel(25, Colors.black12, Colors.black38),
+      Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            SizedBox(
+              width: 300,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: _openSvgFileButtonPressed,
+                child: const Text(
+                  'Open SVG File',
+                  style: TextStyle(fontSize: 20),
+                ),
+              ),
+            )
+          ],
+        ),
       ),
-    );
+    ]);
   }
 
   Widget _buildPortraitBody(BuildContext context, double deviceWidth, double deviceHeight) {
@@ -137,6 +148,7 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
           ),
           Expanded(
             child: Stack(children: [
+              CheckerboardPanel(25, Colors.black12, Colors.black38),
               SvgPicture.memory(SvgDocument(svgBytes).simplified().bytes),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -184,6 +196,7 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
           ),
           Expanded(
             child: Stack(children: [
+              CheckerboardPanel(25, Colors.black12, Colors.black38),
               SvgPicture.memory(SvgDocument(svgBytes).simplified().bytes),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
