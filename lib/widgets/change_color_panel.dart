@@ -18,12 +18,17 @@ class ChangeColorPanel extends StatefulWidget {
 class _ChangeColorPanelState extends State<ChangeColorPanel> {
   final TextEditingController _textEditController = TextEditingController();
   SvgColorChangeDeltaKind _deltaKind = SvgColorChangeDeltaKind.value;
+  List<bool> _selectedDeltaKinds = [];
 
   @override
   void initState() {
     super.initState();
 
     _textEditController.addListener(textEditControllerChanged);
+    _selectedDeltaKinds = List.generate(
+      SvgColorChangeDeltaKind.values.length,
+      (index) => SvgColorChangeDeltaKind.values[index] == _deltaKind,
+    );
   }
 
   @override
@@ -39,7 +44,10 @@ class _ChangeColorPanelState extends State<ChangeColorPanel> {
                 alignment: Alignment.centerLeft,
                 child: Container(
                   margin: const EdgeInsets.only(left: Dimensions.marginNaviTitleLeft),
-                  child: Text("Delta of ${_getLongLabel()}", style: const TextStyle(fontSize: Dimensions.fontSizeNormal)),
+                  child: Text(
+                    "Delta of ${_getLongLabel()}",
+                    style: const TextStyle(fontSize: Dimensions.fontSizeNormal),
+                  ),
                 ),
               ),
               Align(
@@ -71,40 +79,28 @@ class _ChangeColorPanelState extends State<ChangeColorPanel> {
         Container(
           margin: Dimensions.marginBodyLTR,
           child: Row(children: [
-            InkWell(
-              child: Row(children: [
-                Radio(
-                  value: SvgColorChangeDeltaKind.value,
-                  groupValue: _deltaKind,
-                  onChanged: deltaKindRadioChanged,
-                ),
-                const Text(
+            ToggleButtons(
+              children: const [
+                Text(
                   "Value",
-                  style: TextStyle(fontSize: Dimensions.fontSizeNormal),
+                  style: TextStyle(fontSize: 18),
                 ),
-              ]),
-              onTap: () {
+                Text(
+                  "Percentage in Limit",
+                  style: TextStyle(fontSize: 18),
+                ),
+              ],
+              isSelected: _selectedDeltaKinds,
+              onPressed: (index) {
                 setState(() {
-                  deltaKindRadioChanged(SvgColorChangeDeltaKind.value);
+                  _deltaKind = SvgColorChangeDeltaKind.values[index];
+                  _selectedDeltaKinds = List.generate(
+                    SvgColorChangeDeltaKind.values.length,
+                    (index) => SvgColorChangeDeltaKind.values[index] == _deltaKind,
+                  );
                 });
               },
-            ),
-            const SizedBox(width: Dimensions.spacingRadios),
-            InkWell(
-              child: Row(children: [
-                Radio(
-                  value: SvgColorChangeDeltaKind.percentageInLimit,
-                  groupValue: _deltaKind,
-                  onChanged: deltaKindRadioChanged,
-                ),
-                const Text(
-                  "Percentage in Limit",
-                  style: TextStyle(fontSize: Dimensions.fontSizeNormal),
-                ),
-              ]),
-              onTap: () {
-                deltaKindRadioChanged(SvgColorChangeDeltaKind.percentageInLimit);
-              },
+              constraints: const BoxConstraints(minHeight: 40, minWidth: 200),
             ),
           ]),
         ),
