@@ -1,4 +1,3 @@
-import 'package:ccosvg/constants.dart';
 import 'package:ccosvg/helpers/show_message.dart';
 import 'package:ccosvg/models/equal_svg_color_set.dart';
 import 'package:ccosvg/models/svg_color.dart';
@@ -6,6 +5,8 @@ import 'package:ccosvg/models/svg_color_change.dart';
 import 'package:ccosvg/models/svg_document.dart';
 import 'package:ccosvg/widgets/change_color_panel.dart';
 import 'package:ccosvg/widgets/checkerboard_panel.dart';
+import 'package:collection/collection.dart';
+import 'package:data_table_2/data_table_2.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:file_saver/file_saver.dart';
 import 'package:flutter/foundation.dart';
@@ -68,7 +69,6 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
   List<EqualSvgColorSet> svgColorSets = [];
   Set<int> selectedIndices = {};
   bool hasSelection = false;
-  int? firstVisibleRowIndex;
   String? editingLabel;
   Uint8List? backupSvgBytes;
   List<SvgColor>? backupSvgColors;
@@ -125,9 +125,11 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
 
   Widget _buildPortraitBody(BuildContext context, double deviceWidth, double deviceHeight) {
     final dataSource = _HSLColorDataTableSource(svgColorSets, selectedIndices, _onSelectionChanged);
-    final dataTableHeightMax = deviceHeight * 0.5 - 56 - 56 - 56 - 8;
+    const appBarHeight = 56;
+    const dataTableHeaderHeight = 56;
+    final dataTableHeightMax = (deviceHeight - appBarHeight) * 0.5 - dataTableHeaderHeight;
     final dataTableRowsPerPage = (dataTableHeightMax / kMinInteractiveDimension).truncate();
-    final dataTableHeight = dataTableRowsPerPage * kMinInteractiveDimension + 56 + 56 + 8;
+    final dataTableHeight = (dataTableRowsPerPage + 0.5) * kMinInteractiveDimension + dataTableHeaderHeight;
     return SizedBox(
       width: double.infinity,
       child: Column(
@@ -137,7 +139,7 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
               SizedBox(
                   width: double.infinity,
                   height: dataTableHeight,
-                  child: _buildPaginatedDataTable(context, dataSource, dataTableRowsPerPage)),
+                  child: _buildPaginatedDataTable(context, dataSource)),
               SizedBox(width: double.infinity, height: dataTableHeight, child: _buildChangeColorPanel(context)),
             ],
           ),
@@ -172,8 +174,6 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
 
   Widget _buildLandscapeBody(BuildContext context, double deviceWidth, double deviceHeight) {
     final dataSource = _HSLColorDataTableSource(svgColorSets, selectedIndices, _onSelectionChanged);
-    final dataTableHeightMax = deviceHeight - 56 - 56 - 56 - 8;
-    final dataTableRowsPerPage = (dataTableHeightMax / kMinInteractiveDimension).truncate();
     return SizedBox(
       width: double.infinity,
       child: Row(
@@ -185,7 +185,7 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
               SizedBox(
                   width: deviceWidth * 0.5,
                   height: double.infinity,
-                  child: _buildPaginatedDataTable(context, dataSource, dataTableRowsPerPage)),
+                  child: _buildPaginatedDataTable(context, dataSource)),
               SizedBox(width: deviceWidth * 0.5, height: double.infinity, child: _buildChangeColorPanel(context)),
             ]),
           ),
@@ -229,9 +229,9 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
     });
   }
 
-  Widget _buildPaginatedDataTable(BuildContext context, _HSLColorDataTableSource dataSource, int dataTableRowsPerPage) {
+  Widget _buildPaginatedDataTable(BuildContext context, _HSLColorDataTableSource dataSource) {
     return Visibility(
-        child: PaginatedDataTable(
+        child: DataTable2(
           columns: [
             _buildDataColumn(context, "H"),
             _buildDataColumn(context, "S"),
@@ -239,42 +239,16 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
             const DataColumn(label: Text("")),
           ],
           onSelectAll: (value) async {
-            final yes = await showYesNo(context, "Select/Deselect All", "Target all items on all pages?");
-            if (yes ?? false) {
-              setState(() {
-                selectedIndices = (value ?? false) ? svgColors.asMap().entries.map((e) => e.key).toSet() : {};
-                hasSelection = value ?? false;
-              });
-            } else {
-              setState(() {
-                List<int> indices = [];
-                final indexStart = firstVisibleRowIndex;
-                if (indexStart != null) {
-                  final indexEnd = indexStart + dataTableRowsPerPage;
-                  var index = indexStart;
-                  while (index < indexEnd) {
-                    indices.add(index);
-                    ++index;
-                  }
-                }
-                if (value ?? false) {
-                  selectedIndices.addAll(indices);
-                } else {
-                  selectedIndices.removeAll(indices);
-                }
-                hasSelection = selectedIndices.isNotEmpty;
-              });
-            }
-          },
-          columnSpacing: 14,
-          showFirstLastButtons: true,
-          onPageChanged: (value) {
             setState(() {
-              firstVisibleRowIndex = value;
+              selectedIndices = (value ?? false) ? svgColors.asMap().entries.map((e) => e.key).toSet() : {};
+              hasSelection = value ?? false;
             });
           },
-          rowsPerPage: dataTableRowsPerPage,
-          source: dataSource,
+          columnSpacing: 14,
+          rows: List.generate(dataSource.rowCount, (index) => index)
+              .map((i) => dataSource.getRow(i))
+              .whereNotNull()
+              .toList(),
         ),
         visible: editingLabel == null);
   }
@@ -384,7 +358,6 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
       this.svgBytes = svgBytes;
       svgColors = SvgDocument(svgBytes).getColors();
       svgColorSets = summarizeSvgColors(svgColors, 36, 0.1);
-      firstVisibleRowIndex = svgColors.isEmpty ? null : 0;
       editingLabel = null;
       backupSvgBytes = null;
       backupSvgColors = null;
@@ -430,7 +403,6 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
       svgBytes = Uint8List(0);
       svgColors = [];
       svgColorSets = [];
-      firstVisibleRowIndex = null;
       editingLabel = null;
       backupSvgBytes = null;
       backupSvgColors = null;
