@@ -1,5 +1,6 @@
 import 'package:ccosvg/constants.dart';
 import 'package:ccosvg/models/svg_color_change.dart';
+import 'package:ccosvg/my_flutter_app_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -81,14 +82,8 @@ class _ChangeColorPanelState extends State<ChangeColorPanel> {
           child: Row(children: [
             ToggleButtons(
               children: const [
-                Text(
-                  "Value",
-                  style: TextStyle(fontSize: 18),
-                ),
-                Text(
-                  "Percentage in Limit",
-                  style: TextStyle(fontSize: 18),
-                ),
+                Icon(MyFlutterApp.color_change_delta_kind_0, size: 40),
+                Icon(MyFlutterApp.color_change_delta_kind_1, size: 40),
               ],
               isSelected: _selectedDeltaKinds,
               onPressed: (index) {
@@ -100,7 +95,13 @@ class _ChangeColorPanelState extends State<ChangeColorPanel> {
                   );
                 });
               },
-              constraints: const BoxConstraints(minHeight: 40, minWidth: 200),
+              constraints: const BoxConstraints(minHeight: 48, minWidth: 48),
+              color: Colors.grey[500],
+              selectedColor: Colors.white,
+              fillColor: Colors.grey[700],
+              borderColor: Colors.grey[700],
+              selectedBorderColor: Colors.grey[700],
+              borderRadius: const BorderRadius.all(Radius.circular(3)),
             ),
           ]),
         ),
