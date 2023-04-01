@@ -287,6 +287,7 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
         break;
     }
     return Visibility(
+      child: SingleChildScrollView(
         child: ChangeColorPanel(targetComponent, onChanged: (change) {
           svgBytes = Uint8List.fromList(backupSvgBytes ?? Uint8List(0));
           svgColors = (backupSvgColors ?? []).map((e) => e.clone()).toList();
@@ -315,7 +316,9 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
             backupSvgColorSets = null;
           });
         }),
-        visible: editingLabel != null);
+      ),
+      visible: editingLabel != null,
+    );
   }
 
   void _updateColors(BuildContext context, SvgColorChange change) {
