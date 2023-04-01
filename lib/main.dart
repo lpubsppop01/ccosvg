@@ -1,4 +1,4 @@
-import 'package:ccosvg/widgets/display_svg_page.dart';
+import 'package:ccosvg/widgets/my_home_page.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -49,7 +49,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: mcgpalette0,
       ),
-      home: const DisplaySvgPage(),
+      home: const MyHomePage(),
     );
   }
 }
