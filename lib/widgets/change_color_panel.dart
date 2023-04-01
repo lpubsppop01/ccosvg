@@ -26,6 +26,7 @@ class _ChangeColorPanelState extends State<ChangeColorPanel> {
     super.initState();
 
     _textEditController.addListener(textEditControllerChanged);
+    _textEditController.text = "0";
     _selectedDeltaKinds = List.generate(
       SvgColorChangeDeltaKind.values.length,
       (index) => SvgColorChangeDeltaKind.values[index] == _deltaKind,
@@ -34,6 +35,11 @@ class _ChangeColorPanelState extends State<ChangeColorPanel> {
 
   @override
   Widget build(BuildContext context) {
+    const spacingAddButtons = 5.0;
+    final addButtonStyle = ElevatedButton.styleFrom(
+      padding: const EdgeInsets.only(left: 10, right: 10),
+      minimumSize: const Size(0, 40),
+    );
     return SizedBox(
       width: double.infinity,
       child: Column(children: [
@@ -42,13 +48,10 @@ class _ChangeColorPanelState extends State<ChangeColorPanel> {
             height: Dimensions.heightNaviBar,
             child: Stack(children: [
               Align(
-                alignment: Alignment.centerLeft,
-                child: Container(
-                  margin: const EdgeInsets.only(left: Dimensions.marginNaviTitleLeft),
-                  child: Text(
-                    "Delta of ${_getLongLabel()}",
-                    style: const TextStyle(fontSize: Dimensions.fontSizeNormal),
-                  ),
+                alignment: Alignment.center,
+                child: Text(
+                  "Edit ${_getLongLabel()}",
+                  style: const TextStyle(fontSize: Dimensions.fontSizeNormal),
                 ),
               ),
               Align(
@@ -56,6 +59,7 @@ class _ChangeColorPanelState extends State<ChangeColorPanel> {
                 child: Container(
                   margin: const EdgeInsets.only(left: Dimensions.marginNaviLeft),
                   child: IconButton(
+                    color: Colors.grey[700],
                     onPressed: () => widget.onCancelled?.call(),
                     icon: const Icon(Icons.arrow_back),
                   ),
@@ -66,6 +70,7 @@ class _ChangeColorPanelState extends State<ChangeColorPanel> {
                 child: Container(
                   margin: const EdgeInsets.only(right: Dimensions.marginNaviRight),
                   child: IconButton(
+                    color: Colors.grey[700],
                     onPressed: () => widget.onDecided?.call(_buildChange()),
                     icon: const Icon(Icons.check),
                   ),
@@ -86,17 +91,9 @@ class _ChangeColorPanelState extends State<ChangeColorPanel> {
                 Icon(MyFlutterApp.color_change_delta_kind_1, size: 40),
               ],
               isSelected: _selectedDeltaKinds,
-              onPressed: (index) {
-                setState(() {
-                  _deltaKind = SvgColorChangeDeltaKind.values[index];
-                  _selectedDeltaKinds = List.generate(
-                    SvgColorChangeDeltaKind.values.length,
-                    (index) => SvgColorChangeDeltaKind.values[index] == _deltaKind,
-                  );
-                });
-              },
+              onPressed: _deltaKindToggleButtonsPressed,
               constraints: const BoxConstraints(minHeight: 48, minWidth: 48),
-              color: Colors.grey[500],
+              color: Colors.grey[600],
               selectedColor: Colors.white,
               fillColor: Colors.grey[700],
               borderColor: Colors.grey[700],
@@ -109,8 +106,9 @@ class _ChangeColorPanelState extends State<ChangeColorPanel> {
             margin: Dimensions.marginBodyLTR,
             child: TextField(
               controller: _textEditController,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                suffixText: _deltaKind == SvgColorChangeDeltaKind.percentageInLimit ?  '%' : '',
+                border: const OutlineInputBorder(),
               ),
               keyboardType: const TextInputType.numberWithOptions(signed: true),
               textAlign: TextAlign.right,
@@ -130,21 +128,25 @@ class _ChangeColorPanelState extends State<ChangeColorPanel> {
                   ElevatedButton(
                     child: const Text("-10"),
                     onPressed: () => addValueButtonPressed(-10),
+                    style: addButtonStyle,
                   ),
-                  const SizedBox(width: Dimensions.spacingButtons),
+                  const SizedBox(width: spacingAddButtons),
                   ElevatedButton(
                     child: const Text("-1"),
                     onPressed: () => addValueButtonPressed(-1),
+                    style: addButtonStyle,
                   ),
-                  const SizedBox(width: Dimensions.spacingButtons),
+                  const SizedBox(width: spacingAddButtons),
                   ElevatedButton(
                     child: const Text("+1"),
                     onPressed: () => addValueButtonPressed(1),
+                    style: addButtonStyle,
                   ),
-                  const SizedBox(width: Dimensions.spacingButtons),
+                  const SizedBox(width: spacingAddButtons),
                   ElevatedButton(
                     child: const Text("+10"),
                     onPressed: () => addValueButtonPressed(10),
+                    style: addButtonStyle,
                   ),
                 ],
               ),
@@ -161,23 +163,27 @@ class _ChangeColorPanelState extends State<ChangeColorPanel> {
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   ElevatedButton(
-                    child: const Text("-25"),
-                    onPressed: () => addValueButtonPressed(-25),
-                  ),
-                  const SizedBox(width: Dimensions.spacingButtons),
-                  ElevatedButton(
-                    child: const Text("-10"),
+                    child: const Text("-10%"),
                     onPressed: () => addValueButtonPressed(-10),
+                    style: addButtonStyle,
                   ),
-                  const SizedBox(width: Dimensions.spacingButtons),
+                  const SizedBox(width: spacingAddButtons),
                   ElevatedButton(
-                    child: const Text("+10"),
+                    child: const Text("-1%"),
+                    onPressed: () => addValueButtonPressed(-1),
+                    style: addButtonStyle,
+                  ),
+                  const SizedBox(width: spacingAddButtons),
+                  ElevatedButton(
+                    child: const Text("+1%"),
+                    onPressed: () => addValueButtonPressed(1),
+                    style: addButtonStyle,
+                  ),
+                  const SizedBox(width: spacingAddButtons),
+                  ElevatedButton(
+                    child: const Text("+10%"),
                     onPressed: () => addValueButtonPressed(10),
-                  ),
-                  const SizedBox(width: Dimensions.spacingButtons),
-                  ElevatedButton(
-                    child: const Text("+25"),
-                    onPressed: () => addValueButtonPressed(25),
+                    style: addButtonStyle,
                   ),
                 ],
               ),
@@ -216,10 +222,13 @@ class _ChangeColorPanelState extends State<ChangeColorPanel> {
     widget.onChanged?.call(_buildChange());
   }
 
-  void deltaKindRadioChanged(Object? value) {
-    if (value is! SvgColorChangeDeltaKind) return;
+  void _deltaKindToggleButtonsPressed(int index) {
     setState(() {
-      _deltaKind = value;
+      _deltaKind = SvgColorChangeDeltaKind.values[index];
+      _selectedDeltaKinds = List.generate(
+        SvgColorChangeDeltaKind.values.length,
+        (index) => SvgColorChangeDeltaKind.values[index] == _deltaKind,
+      );
     });
     widget.onChanged?.call(_buildChange());
   }
