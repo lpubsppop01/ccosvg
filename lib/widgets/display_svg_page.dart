@@ -91,6 +91,12 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.svgName),
+        actions: [
+          IconButton(
+            onPressed: _downloadButtonPressed,
+            icon: const Icon(Icons.download),
+          ),
+        ],
       ),
       body: _buildBody(),
     );
@@ -133,15 +139,6 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
             child: Stack(children: [
               CheckerboardPanel(25, Colors.black12, Colors.black38),
               SvgPicture.memory(SvgDocument(svgBytes).simplified().bytes),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  IconButton(
-                    onPressed: _downloadButtonPressed,
-                    icon: const Icon(Icons.download),
-                  ),
-                ],
-              ),
             ]),
           ),
         ],
@@ -175,15 +172,6 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
             child: Stack(children: [
               CheckerboardPanel(25, Colors.black12, Colors.black38),
               SvgPicture.memory(SvgDocument(svgBytes).simplified().bytes),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  IconButton(
-                    onPressed: _downloadButtonPressed,
-                    icon: const Icon(Icons.download),
-                  ),
-                ],
-              ),
             ]),
           ),
         ],
@@ -230,6 +218,7 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
     final editButtonOrSpace = Visibility(
         child: IconButton(
             iconSize: 18,
+            color: Colors.grey[700],
             onPressed: () async {
               setState(() {
                 editingLabel = label;
