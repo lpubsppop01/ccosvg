@@ -1,3 +1,4 @@
+import 'package:ccosvg/constants.dart';
 import 'package:ccosvg/models/equal_svg_color_set.dart';
 import 'package:ccosvg/models/svg_color.dart';
 import 'package:ccosvg/models/svg_color_change.dart';
@@ -117,6 +118,7 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
     final dataTableHeightMax = (deviceHeight - appBarHeight) * 0.5 - dataTableHeaderHeight;
     final dataTableRowsPerPage = (dataTableHeightMax / kMinInteractiveDimension).truncate();
     final dataTableHeight = (dataTableRowsPerPage + 0.5) * kMinInteractiveDimension + dataTableHeaderHeight;
+    final svgViewHeight = deviceHeight - appBarHeight - dataTableHeight - Dimensions.thicknessDivider;
     return SizedBox(
       width: double.infinity,
       child: Column(
@@ -132,14 +134,21 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
           ),
           Divider(
             color: Theme.of(context).dividerColor,
-            thickness: 1,
-            height: 1,
+            thickness: Dimensions.thicknessDivider,
+            height: Dimensions.thicknessDivider,
           ),
-          Expanded(
-            child: Stack(children: [
-              CheckerboardPanel(25, Colors.black12, Colors.black38),
-              SvgPicture.memory(SvgDocument(svgBytes).simplified().bytes),
-            ]),
+          SizedBox(
+            width: deviceWidth,
+            child: SingleChildScrollView(
+              child: SizedBox(
+                width: deviceWidth,
+                height: svgViewHeight,
+                child: Stack(children: [
+                  CheckerboardPanel(25, Colors.black12, Colors.black38),
+                  SvgPicture.memory(SvgDocument(svgBytes).simplified().bytes),
+                ]),
+              ),
+            ),
           ),
         ],
       ),
@@ -148,6 +157,9 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
 
   Widget _buildLandscapeBody(BuildContext context, double deviceWidth, double deviceHeight) {
     final dataSource = _HSLColorDataTableSource(svgColorSets, selectedIndices, _onSelectionChanged);
+    const appBarHeight = 56;
+    final svgViewWidth = deviceWidth * 0.5 - Dimensions.thicknessDivider;
+    final svgViewHeight = deviceHeight - appBarHeight;
     return SizedBox(
       width: double.infinity,
       child: Row(
@@ -165,14 +177,22 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
           ),
           VerticalDivider(
             color: Theme.of(context).dividerColor,
-            thickness: 1,
-            width: 1,
+            thickness: Dimensions.thicknessDivider,
+            width: Dimensions.thicknessDivider,
           ),
-          Expanded(
-            child: Stack(children: [
-              CheckerboardPanel(25, Colors.black12, Colors.black38),
-              SvgPicture.memory(SvgDocument(svgBytes).simplified().bytes),
-            ]),
+          SizedBox(
+            width: svgViewWidth,
+            height: double.infinity,
+            child: SingleChildScrollView(
+              child: SizedBox(
+                width: svgViewWidth,
+                height: svgViewHeight,
+                child: Stack(children: [
+                  CheckerboardPanel(25, Colors.black12, Colors.black38),
+                  SvgPicture.memory(SvgDocument(svgBytes).simplified().bytes),
+                ]),
+              ),
+            ),
           ),
         ],
       ),
