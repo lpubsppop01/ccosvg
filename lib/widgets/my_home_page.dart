@@ -76,7 +76,7 @@ class _MyHomePageState extends State<MyHomePage> {
       context: context,
       applicationName: 'CCoSVG',
       applicationVersion: '${info.version} (${info.buildNumber})',
-      applicationIcon: Image.network('icons/Icon-44.png'),
+      applicationIcon: Image.network('icons/Icon-132.png', width: 44),
       applicationLegalese: "©2023- lpubsppop01",
       children: [
         Padding(
