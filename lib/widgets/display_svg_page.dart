@@ -157,22 +157,23 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
 
   Widget _buildLandscapeBody(BuildContext context, double deviceWidth, double deviceHeight) {
     final dataSource = _HSLColorDataTableSource(svgColorSets, selectedIndices, _onSelectionChanged);
-    const appBarHeight = 56;
-    final svgViewWidth = deviceWidth * 0.5 - Dimensions.thicknessDivider;
+    const double appBarHeight = 56;
+    const double dataTableWidth = 350;
+    final svgViewWidth = deviceWidth - dataTableWidth - Dimensions.thicknessDivider;
     final svgViewHeight = deviceHeight - appBarHeight;
     return SizedBox(
       width: double.infinity,
       child: Row(
         children: [
           SizedBox(
-            width: deviceWidth * 0.5,
+            width: dataTableWidth,
             height: double.infinity,
             child: Stack(children: [
               SizedBox(
-                  width: deviceWidth * 0.5,
+                  width: dataTableWidth,
                   height: double.infinity,
                   child: _buildPaginatedDataTable(context, dataSource)),
-              SizedBox(width: deviceWidth * 0.5, height: double.infinity, child: _buildChangeColorPanel(context)),
+              SizedBox(width: dataTableWidth, height: double.infinity, child: _buildChangeColorPanel(context)),
             ]),
           ),
           VerticalDivider(
