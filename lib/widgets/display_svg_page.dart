@@ -5,6 +5,7 @@ import 'package:ccosvg/models/svg_color_change.dart';
 import 'package:ccosvg/models/svg_document.dart';
 import 'package:ccosvg/widgets/change_color_panel.dart';
 import 'package:ccosvg/widgets/checkerboard_panel.dart';
+import 'package:ccosvg/widgets/settings_dialog.dart';
 import 'package:collection/collection.dart';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:file_saver/file_saver.dart';
@@ -78,7 +79,7 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
 
     svgBytes = widget.svgBytes;
     svgColors = SvgDocument(svgBytes).getColors();
-    svgColorSets = summarizeSvgColors(svgColors, 36, 0.1).sorted((a, b) => -a.compareKeyTo(b));  // descending
+    svgColorSets = summarizeSvgColors(svgColors, 36, 0.1).sorted((a, b) => -a.compareKeyTo(b)); // descending
     selectedIndices = {};
     hasSelection = false;
     editingLabel = null;
@@ -96,6 +97,10 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
           IconButton(
             onPressed: _downloadButtonPressed,
             icon: const Icon(Icons.download),
+          ),
+          IconButton(
+            onPressed: settingsButtonPressed,
+            icon: const Icon(Icons.settings),
           ),
         ],
       ),
@@ -170,9 +175,7 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
             height: double.infinity,
             child: Stack(children: [
               SizedBox(
-                  width: dataTableWidth,
-                  height: double.infinity,
-                  child: _buildPaginatedDataTable(context, dataSource)),
+                  width: dataTableWidth, height: double.infinity, child: _buildPaginatedDataTable(context, dataSource)),
               SizedBox(width: dataTableWidth, height: double.infinity, child: _buildChangeColorPanel(context)),
             ]),
           ),
@@ -331,5 +334,9 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
 
   void _downloadButtonPressed() {
     FileSaver.instance.saveFile("ccosvg_result.svg", svgBytes, "");
+  }
+
+  void settingsButtonPressed() async {
+    final _ = await showDialog(context: context, builder: (_) => const SettingsDialog());
   }
 }
