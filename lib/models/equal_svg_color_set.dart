@@ -1,3 +1,4 @@
+import 'package:ccosvg/helpers/hsl_color_compare_to_other.dart';
 import 'package:ccosvg/models/svg_color.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
@@ -22,6 +23,11 @@ class EqualSvgColorSet {
 
   @override
   int get hashCode => Object.hash(representingValue, colors);
+
+  int compareKeyTo(EqualSvgColorSet other, [double toleranceDegree = 5, double toleranceRatio = 0.05]) {
+    return representingValue.compareTo(
+        other.representingValue, toleranceDegree = toleranceDegree, toleranceRatio = toleranceRatio);
+  }
 }
 
 List<EqualSvgColorSet> summarizeSvgColors(List<SvgColor> colors,
@@ -30,19 +36,9 @@ List<EqualSvgColorSet> summarizeSvgColors(List<SvgColor> colors,
   for (var color in colors) {
     var found = false;
     for (var colorSet in result) {
-      var deltaL = color.hslColor.lightness - colorSet.representingValue.lightness;
-      if (deltaL.abs() > toleranceRatio) continue;
-      if (colorSet.representingValue.lightness > toleranceRatio) {
-        var deltaS = color.hslColor.saturation - colorSet.representingValue.saturation;
-        if (deltaS.abs() > toleranceRatio) continue;
-        if (colorSet.representingValue.saturation > toleranceRatio) {
-          var deltaH = (color.hslColor.hue - colorSet.representingValue.hue) % 360;
-          if (deltaH > 180) {
-            deltaH -= 360;
-          }
-          if (deltaH.abs() > toleranceDegree) continue;
-        }
-      }
+      final comparisonResult = color.hslColor
+          .compareTo(colorSet.representingValue, toleranceDegree = toleranceDegree, toleranceRatio = toleranceRatio);
+      if (comparisonResult != 0) continue;
       colorSet.colors.add(color);
       found = true;
       break;

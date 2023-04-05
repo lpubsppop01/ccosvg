@@ -78,7 +78,7 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
 
     svgBytes = widget.svgBytes;
     svgColors = SvgDocument(svgBytes).getColors();
-    svgColorSets = summarizeSvgColors(svgColors, 36, 0.1);
+    svgColorSets = summarizeSvgColors(svgColors, 36, 0.1).sorted((a, b) => -a.compareKeyTo(b));  // descending
     selectedIndices = {};
     hasSelection = false;
     editingLabel = null;
