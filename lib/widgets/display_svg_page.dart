@@ -64,17 +64,10 @@ class _HSLColorDataTableSource extends DataTableSource {
   int get selectedRowCount => selectedIndices.length;
 }
 
-class _ColorsAndColorSets {
-  List<SvgColor> colors = [];
-  List<EqualSvgColorSet> colorSets = [];
-
-  _ColorsAndColorSets(this.colors, this.colorSets);
-}
-
 class _DisplaySvgPageState extends State<DisplaySvgPage> {
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
   var _svgBytes = Uint8List(0);
-  late Future<_ColorsAndColorSets> _colorsAndColorSets;
+  late Future<List<EqualSvgColorSet>> _colorSets;
   Set<int> selectedIndices = {};
   bool hasSelection = false;
   String? editingLabel;
@@ -87,14 +80,14 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
     super.initState();
 
     _svgBytes = widget.svgBytes;
-    _colorsAndColorSets = _prefs.then((prefs) {
+    _colorSets = _prefs.then((prefs) {
       final toleranceDegree = prefs.getDouble("toleranceDegree") ?? SettingsDefault.toleranceDegree;
       final toleranceRatio = (prefs.getDouble("toleranceRatio") ?? SettingsDefault.toleranceRatio) / 100.0;
-      return _createColorsAndColorSets(toleranceDegree, toleranceRatio);
+      return _createColorSets(toleranceDegree, toleranceRatio);
     }).onError((error, stackTrace) {
       const toleranceDegree = SettingsDefault.toleranceDegree;
       const toleranceRatio = SettingsDefault.toleranceRatio / 100.0;
-      return _createColorsAndColorSets(toleranceDegree, toleranceRatio);
+      return _createColorSets(toleranceDegree, toleranceRatio);
     });
     selectedIndices = {};
     hasSelection = false;
@@ -104,11 +97,11 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
     backupSvgColorSets = null;
   }
 
-  _ColorsAndColorSets _createColorsAndColorSets(double toleranceDegree, double toleranceRatio) {
+  List<EqualSvgColorSet> _createColorSets(double toleranceDegree, double toleranceRatio) {
     final svgColors = SvgDocument(_svgBytes).getColors();
     final svgColorSets = summarizeSvgColors(svgColors, toleranceDegree, toleranceRatio)
         .sorted((a, b) => -a.compareKeyTo(b)); // descending
-    return _ColorsAndColorSets(svgColors, svgColorSets);
+    return svgColorSets;
   }
 
   @override
@@ -132,16 +125,16 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
   }
 
   Widget _buildBody() {
-    return FutureBuilder<_ColorsAndColorSets>(
-      future: _colorsAndColorSets,
+    return FutureBuilder<List<EqualSvgColorSet>>(
+      future: _colorSets,
       builder: (context, snapshot) {
-        final colorsAndColorSets = snapshot.data;
-        if (colorsAndColorSets != null) {
+        final colorSets = snapshot.data;
+        if (colorSets != null) {
           final double deviceWidth = MediaQuery.of(context).size.width;
           final double deviceHeight = MediaQuery.of(context).size.height;
           return deviceWidth < deviceHeight
-              ? _buildPortraitBody(context, deviceWidth, deviceHeight, colorsAndColorSets)
-              : _buildLandscapeBody(context, deviceWidth, deviceHeight, colorsAndColorSets);
+              ? _buildPortraitBody(context, deviceWidth, deviceHeight, colorSets)
+              : _buildLandscapeBody(context, deviceWidth, deviceHeight, colorSets);
         } else {
           return Center(
             child: Column(
@@ -157,8 +150,8 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
   }
 
   Widget _buildPortraitBody(
-      BuildContext context, double deviceWidth, double deviceHeight, _ColorsAndColorSets colorsAndColorSets) {
-    final dataSource = _HSLColorDataTableSource(colorsAndColorSets.colorSets, selectedIndices, _onSelectionChanged);
+      BuildContext context, double deviceWidth, double deviceHeight, List<EqualSvgColorSet> colorSets) {
+    final dataSource = _HSLColorDataTableSource(colorSets, selectedIndices, _onSelectionChanged);
     const appBarHeight = 56;
     const dataTableHeaderHeight = 56;
     final dataTableHeightMax = (deviceHeight - appBarHeight) * 0.5 - dataTableHeaderHeight;
@@ -174,11 +167,11 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
               SizedBox(
                   width: double.infinity,
                   height: dataTableHeight,
-                  child: _buildPaginatedDataTable(context, dataSource, colorsAndColorSets)),
+                  child: _buildPaginatedDataTable(context, dataSource, colorSets)),
               SizedBox(
                   width: double.infinity,
                   height: dataTableHeight,
-                  child: _buildChangeColorPanel(context, colorsAndColorSets)),
+                  child: _buildChangeColorPanel(context, colorSets)),
             ],
           ),
           Divider(
@@ -205,8 +198,8 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
   }
 
   Widget _buildLandscapeBody(
-      BuildContext context, double deviceWidth, double deviceHeight, _ColorsAndColorSets colorsAndColorSets) {
-    final dataSource = _HSLColorDataTableSource(colorsAndColorSets.colorSets, selectedIndices, _onSelectionChanged);
+      BuildContext context, double deviceWidth, double deviceHeight, List<EqualSvgColorSet> colorSets) {
+    final dataSource = _HSLColorDataTableSource(colorSets, selectedIndices, _onSelectionChanged);
     const double appBarHeight = 56;
     const double dataTableWidth = 350;
     final svgViewWidth = deviceWidth - dataTableWidth - Dimensions.thicknessDivider;
@@ -222,11 +215,11 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
               SizedBox(
                   width: dataTableWidth,
                   height: double.infinity,
-                  child: _buildPaginatedDataTable(context, dataSource, colorsAndColorSets)),
+                  child: _buildPaginatedDataTable(context, dataSource, colorSets)),
               SizedBox(
                   width: dataTableWidth,
                   height: double.infinity,
-                  child: _buildChangeColorPanel(context, colorsAndColorSets)),
+                  child: _buildChangeColorPanel(context, colorSets)),
             ]),
           ),
           VerticalDivider(
@@ -265,19 +258,18 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
   }
 
   Widget _buildPaginatedDataTable(
-      BuildContext context, _HSLColorDataTableSource dataSource, _ColorsAndColorSets colorsAndColorSets) {
+      BuildContext context, _HSLColorDataTableSource dataSource, List<EqualSvgColorSet> colorSets) {
     return Visibility(
         child: DataTable2(
           columns: [
-            _buildDataColumn(context, "H", colorsAndColorSets),
-            _buildDataColumn(context, "S", colorsAndColorSets),
-            _buildDataColumn(context, "L", colorsAndColorSets),
+            _buildDataColumn(context, "H", colorSets),
+            _buildDataColumn(context, "S", colorSets),
+            _buildDataColumn(context, "L", colorSets),
             const DataColumn(label: Text("")),
           ],
           onSelectAll: (value) async {
             setState(() {
-              selectedIndices =
-                  (value ?? false) ? colorsAndColorSets.colors.asMap().entries.map((e) => e.key).toSet() : {};
+              selectedIndices = (value ?? false) ? colorSets.asMap().entries.map((e) => e.key).toSet() : {};
               hasSelection = value ?? false;
             });
           },
@@ -290,7 +282,7 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
         visible: editingLabel == null);
   }
 
-  DataColumn _buildDataColumn(BuildContext context, String label, _ColorsAndColorSets colorsAndColorSets) {
+  DataColumn _buildDataColumn(BuildContext context, String label, List<EqualSvgColorSet> colorSets) {
     final editButtonOrSpace = Visibility(
         child: IconButton(
             iconSize: 18,
@@ -299,8 +291,7 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
               setState(() {
                 editingLabel = label;
                 backupSvgBytes = Uint8List.fromList(_svgBytes);
-                backupSvgColors = colorsAndColorSets.colors.map((e) => e.clone()).toList();
-                backupSvgColorSets = colorsAndColorSets.colorSets.map((e) => e.clone()).toList();
+                backupSvgColorSets = colorSets.map((e) => e.clone()).toList();
               });
             },
             icon: const Icon(Icons.edit)),
@@ -311,7 +302,7 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
     return DataColumn(label: Row(children: [Text(label), editButtonOrSpace]));
   }
 
-  Widget _buildChangeColorPanel(BuildContext context, _ColorsAndColorSets colorsAndColorSets) {
+  Widget _buildChangeColorPanel(BuildContext context, List<EqualSvgColorSet> colorSets) {
     var targetComponent = SvgColorChangeTargetComponent.hue;
     switch (editingLabel ?? "") {
       case "H":
@@ -328,14 +319,14 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
       child: SingleChildScrollView(
         child: ChangeColorPanel(targetComponent, onChanged: (change) {
           _svgBytes = Uint8List.fromList(backupSvgBytes ?? Uint8List(0));
-          colorsAndColorSets.colors = (backupSvgColors ?? []).map((e) => e.clone()).toList();
-          colorsAndColorSets.colorSets = (backupSvgColorSets ?? []).map((e) => e.clone()).toList();
-          _applyColorChange(context, change, colorsAndColorSets);
+          colorSets.clear();
+          colorSets.addAll((backupSvgColorSets ?? []).map((e) => e.clone()));
+          _applyColorChange(context, change, colorSets);
         }, onDecided: (change) {
           _svgBytes = Uint8List.fromList(backupSvgBytes ?? Uint8List(0));
-          colorsAndColorSets.colors = (backupSvgColors ?? []).map((e) => e.clone()).toList();
-          colorsAndColorSets.colorSets = (backupSvgColorSets ?? []).map((e) => e.clone()).toList();
-          _applyColorChange(context, change, colorsAndColorSets);
+          colorSets.clear();
+          colorSets.addAll((backupSvgColorSets ?? []).map((e) => e.clone()));
+          _applyColorChange(context, change, colorSets);
           setState(() {
             editingLabel = null;
             backupSvgBytes = null;
@@ -345,8 +336,8 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
         }, onCancelled: () {
           setState(() {
             _svgBytes = backupSvgBytes ?? Uint8List(0);
-            colorsAndColorSets.colors = backupSvgColors ?? [];
-            colorsAndColorSets.colorSets = backupSvgColorSets ?? [];
+            colorSets.clear();
+            colorSets.addAll(backupSvgColorSets ?? []);
 
             editingLabel = null;
             backupSvgBytes = null;
@@ -359,27 +350,26 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
     );
   }
 
-  void _applyColorChange(BuildContext context, SvgColorChange change, _ColorsAndColorSets colorsAndColorSets) {
+  void _applyColorChange(BuildContext context, SvgColorChange change, List<EqualSvgColorSet> colorSets) {
     setState(() {
-      // Update svgColors
-      for (var index in selectedIndices) {
-        change.applyToColor(colorsAndColorSets.colors[index]);
-      }
-
       // Update svgColorSets
-      List<EqualSvgColorSet> newSvgColorSets = [];
-      for (var svgColorSet in colorsAndColorSets.colorSets) {
-        for (var color in svgColorSet.colors) {
-          change.applyToColor(color);
+      List<EqualSvgColorSet> newColorSets = [];
+      for (var index = 0; index < colorSets.length; ++index) {
+        final newColors = colorSets[index].colors.map((e) => e.clone()).toList();
+        if (selectedIndices.contains(index)) {
+          for (var newColor in newColors) {
+            change.applyToColor(newColor);
+          }
         }
-        var newSvgColorSet = EqualSvgColorSet(svgColorSet.colors[0].hslColor, svgColorSet.colors);
-        newSvgColorSets.add(newSvgColorSet);
+        var newColorSet = EqualSvgColorSet(newColors[0].hslColor, newColors);
+        newColorSets.add(newColorSet);
       }
-      colorsAndColorSets.colorSets = newSvgColorSets;
+      colorSets.clear();
+      colorSets.addAll(newColorSets);
 
       // Update svgBytes
       final svgDocument = SvgDocument(_svgBytes);
-      svgDocument.setColors(colorsAndColorSets.colors);
+      svgDocument.setColors(colorSets.expand((element) => element.colors).toList());
       _svgBytes = svgDocument.bytes;
     });
   }
@@ -394,7 +384,7 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
       builder: (_) => SettingsDialog(
         onChanged: (change) {
           setState(() {
-            _colorsAndColorSets = _prefs.then((prefs) {
+            _colorSets = _prefs.then((prefs) {
               var toleranceDegree = prefs.getDouble("toleranceDegree") ?? SettingsDefault.toleranceDegree;
               var toleranceRatio = (prefs.getDouble("toleranceRatio") ?? SettingsDefault.toleranceRatio) / 100.0;
               if (change.target == SettingsChangeTarget.toleranceDegree) {
@@ -402,7 +392,7 @@ class _DisplaySvgPageState extends State<DisplaySvgPage> {
               } else if (change.target == SettingsChangeTarget.toleranceRatio) {
                 toleranceRatio = (change.newValue as double) / 100.0;
               }
-              return _createColorsAndColorSets(toleranceDegree, toleranceRatio);
+              return _createColorSets(toleranceDegree, toleranceRatio);
             });
           });
         },
