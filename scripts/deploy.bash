@@ -57,6 +57,7 @@ while true; do
 done
 
 # Build and push
+# - "--web-renderer canvaskit" seems to make shared_preferences not to work.
 flutter pub global activate peanut && \
-flutter pub global run peanut -b $DEPLOYMENT_TARGET --web-renderer canvaskit && \
+flutter pub global run peanut -b $DEPLOYMENT_TARGET && \
 git push origin $DEPLOYMENT_TARGET

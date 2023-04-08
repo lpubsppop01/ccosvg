@@ -107,7 +107,7 @@ class _ChangeColorPanelState extends State<ChangeColorPanel> {
             child: TextField(
               controller: _textEditController,
               decoration: InputDecoration(
-                suffixText: _deltaKind == SvgColorChangeDeltaKind.percentageInLimit ?  '%' : '',
+                suffixText: _getUnitNotation(),
                 border: const OutlineInputBorder(),
               ),
               keyboardType: const TextInputType.numberWithOptions(signed: true),
@@ -205,6 +205,14 @@ class _ChangeColorPanelState extends State<ChangeColorPanel> {
         return "Lightness";
       default:
         return "";
+    }
+  }
+
+  String _getUnitNotation() {
+    if (_deltaKind == SvgColorChangeDeltaKind.value && widget.targetComponent == SvgColorChangeTargetComponent.hue) {
+      return 'deg';
+    } else {
+      return '%';
     }
   }
 

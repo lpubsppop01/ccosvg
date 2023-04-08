@@ -10,6 +10,13 @@ class Dimensions {
   static const double marginNaviLeft = 10;
   static const double marginNaviRight = 10;
   static const double marginNaviTitleLeft = 72;
+  static const double spacingBody = 10;
+  static const double spacingBodyHalf = 5;
   static const double spacingButtons = 10;
   static const double spacingRadios = 10;
+}
+
+class SettingsDefault {
+  static const double toleranceDegree = 36;
+  static const double toleranceRatio = 10;
 }
